@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Budgets</title>
+
+    {% include "styles.html" %}
+
+</head>
+
+<body>
+
+<!-- SIDEBAR -->
+
+<div class="sidebar">
+
+    {% load static %}
+
+    <div class="sidebar-profile">
+
+        <img src="{% static 'images/user.png' %}" class="profile-img">
+
+        <div class="profile-name">
+            {{ request.user.username }}
+        </div>
+
+    </div>
+
+    <a href="/admin/">Admin Panel</a>
+    <a href="/">Expense Tracker Dashboard</a>
+    <a href="/expenses/">Expenses</a>
+    <a href="/categories/">Categories</a>
+    <a href="/budgets/">Budgets</a>
+    <a href="/receipts/">Receipts</a>
+    <a href="/chatbot/">Chatbot</a>
+
+</div>
+
+
+<!-- MAIN CONTENT -->
+
+<div class="main-content">
+
+<h1 class="dashboard-title">Budgets</h1>
+
+
+<div class="table-card">
+
+<div class="table-actions">
+
+<form method="POST" enctype="multipart/form-data" style="display:flex; gap:10px;">
+{% csrf_token %}
+
+
+</form>
+
+<a href="{% url 'export_data' 'budgets' %}" class="action-btn">Export</a>
+
+</div>
+
+
+<table>
+
+<thead class="table-header">
+
+<tr>
+<th>Month</th>
+<th>Total Income</th>
+<th>Budget Limit</th>
+<th>Created By</th>
+<th>Created At</th>
+</tr>
+
+</thead>
+
+<tbody>
+
+{% for budget in budgets %}
+
+<tr>
+
+<td>{{ budget.month }}</td>
+<td>${{ budget.total_income }}</td>
+<td>${{ budget.budget_limit }}</td>
+<td>{{ budget.created_by }}</td>
+<td>{{ budget.created_at }}</td>
+
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+</body>
+
+</html>

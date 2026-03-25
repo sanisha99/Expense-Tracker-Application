@@ -1,0 +1,269 @@
+/* =================================
+PAGE BACKGROUND
+================================= */
+
+body {
+background: #f5f7fa !important;   /* dark background */
+font-family: Arial, Helvetica, sans-serif;
+}
+
+/* =================================
+HEADER
+================================= */
+
+#header {
+background: #1f2d3d !important;
+height: 65px;
+display: flex;
+align-items: center;
+}
+
+#site-name {
+font-size: 28px !important;
+font-weight: bold;
+color: #69b3d0 !important;
+}
+
+#user-tools {
+color: white !important;
+}
+
+/* =================================
+MAIN CONTENT
+================================= */
+
+#content {
+padding: 40px !important;
+}
+
+/* PAGE TITLE */
+
+#content h1 {
+color: #333 !important;
+font-size: 28px;
+margin-bottom: 25px;
+}
+
+/* =================================
+MODULE CARDS
+================================= */
+
+.module {
+background: white !important;
+border-radius: 12px;
+padding: 20px;
+margin-bottom: 30px;
+box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+/* MODULE HEADER */
+
+.module h2 {
+background: #3c8dbc !important;
+color: white !important;
+padding: 12px 15px;
+border-radius: 8px;
+font-size: 16px;
+}
+
+/* =================================
+TABLES
+================================= */
+
+table {
+width: 100%;
+background: white !important;
+border-collapse: collapse;
+}
+
+thead th {
+background: #3c8dbc !important;
+color: white !important;
+padding: 12px;
+}
+
+tbody td {
+color: #333 !important;
+padding: 12px;
+border-bottom: 1px solid #eee;
+}
+
+tbody tr:hover {
+background: #f5f7fa;
+}
+
+/* =================================
+LINKS
+================================= */
+
+a {
+color: #3c8dbc !important;
+}
+
+a:hover {
+color: #69b3d0 !important;
+}
+
+/* =================================
+FORMS
+================================= */
+
+#content-main form {
+background: white;
+padding: 30px;
+border-radius: 12px;
+}
+
+label {
+color: #333 !important;
+font-weight: 600;
+}
+
+input,
+select,
+textarea {
+border-radius: 6px;
+border: 1px solid #dcdcdc !important;
+padding: 8px 10px;
+}
+
+/* =================================
+BUTTONS
+================================= */
+
+.button,
+input[type=submit],
+input[type=button] {
+background: #3c8dbc !important;
+color: white !important;
+border-radius: 6px;
+border: none;
+}
+
+/* =================================
+RECENT ACTIONS PANEL
+================================= */
+
+#recent-actions-module {
+background: white !important;
+border-radius: 12px;
+padding: 20px;
+}
+
+/* =================================
+SEARCH BAR
+================================= */
+
+#searchbar {
+border-radius: 6px;
+padding: 6px;
+}
+
+/* =================================
+ADMIN CONTAINER FIX
+================================= */
+
+#container {
+background: #f5f7fa !important;
+}
+
+/* =================================
+FORCE MODULE TEXT COLORS
+================================= */
+
+.module table td,
+.module table th,
+.module h2 {
+font-family: Arial, Helvetica, sans-serif !important;
+}
+
+/* =================================
+FORCE LIGHT BACKGROUND FOR ADMIN
+================================= */
+
+html, body {
+background: #f5f7fa !important;
+}
+
+#container {
+background: #f5f7fa !important;
+}
+
+#content {
+background: #f5f7fa !important;
+}
+
+#content-main {
+background: #f5f7fa !important;
+}
+
+#main {
+background: #f5f7fa !important;
+}
+
+/* =================================
+CUSTOM ADMIN ACTION BUTTONS
+================================= */
+
+.button,
+input[type="submit"],
+input[type="button"],
+.button.default,
+.object-tools a,
+.object-tools a:link,
+.object-tools a:visited {
+
+background: #3c8dbc !important;
+color: white !important;
+border-radius: 6px !important;
+border: none !important;
+padding: 8px 14px !important;
+font-weight: 600 !important;
+}
+
+/* Hover effect */
+
+.button:hover,
+.object-tools a:hover,
+input[type="submit"]:hover,
+input[type="button"]:hover {
+
+background: #2f79a8 !important;
+color: white !important;
+}
+
+/* ===== FORCE LIGHT ADMIN BACKGROUND ===== */
+
+html body,
+#container,
+#container #content,
+#container #content-main,
+#container #main {
+
+background: #f5f7fa !important;
+
+}
+
+/* fix dark rows */
+
+tbody tr,
+.results tr {
+
+background: white !important;
+}
+
+/* fix action bar */
+
+.actions {
+
+background: #f5f7fa !important;
+
+}
+
+/* fix search area */
+
+#changelist-search {
+
+background: #f5f7fa !important;
+
+}

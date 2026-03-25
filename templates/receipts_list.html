@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Receipts</title>
+
+    {% include "styles.html" %}
+
+</head>
+
+<body>
+
+<!-- SIDEBAR -->
+
+<div class="sidebar">
+
+    {% load static %}
+
+    <div class="sidebar-profile">
+
+        <img src="{% static 'images/user.png' %}" class="profile-img">
+
+        <div class="profile-name">
+            {{ request.user.username }}
+        </div>
+
+    </div>
+
+    <a href="/admin/">Admin Panel</a>
+    <a href="/">Expense Tracker Dashboard</a>
+    <a href="/expenses/">Expenses</a>
+    <a href="/categories/">Categories</a>
+    <a href="/budgets/">Budgets</a>
+    <a href="/receipts/">Receipts</a>
+    <a href="/chatbot/">Chatbot</a>
+
+</div>
+
+
+<!-- MAIN CONTENT -->
+
+<div class="main-content">
+
+<h1 class="dashboard-title">Receipts</h1>
+
+
+<div class="table-card">
+
+<div class="table-actions">
+
+<div class="left-actions">
+    <a href="{% url 'qr_code' %}" class="action-btn">Scan via QR</a>
+</div>
+
+<div class="right-actions">
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="file" name="receipt_image">
+        <button type="submit" class="action-btn">Scan Receipt</button>
+    </form>
+
+    <a href="{% url 'export_data' 'receipts' %}" class="action-btn">Export </a>
+</div>
+
+</div>
+
+
+<table>
+
+<thead class="table-header">
+
+<tr>
+<th>#</th>
+<th>Item</th>
+<th>Total Amount</th>
+<th>Tax Amount</th>
+<th>Uploaded By</th>
+<th>Created At</th>
+</tr>
+
+</thead>
+
+<tbody>
+
+{% for receipt in receipts %}
+
+<tr>
+<td>{{ forloop.counter }}</td>
+<td>{{ receipt.item }}</td>
+<td>${{ receipt.total_amount }}</td>
+<td>${{ receipt.tax_amount }}</td>
+<td>{{ receipt.uploaded_by }}</td>
+<td>{{ receipt.created_at }}</td>
+
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+<div style="margin-top:20px;text-align:center;">
+
+{% if receipts.has_previous %}
+<a href="?page={{ receipts.previous_page_number }}" class="action-btn">Previous</a>
+{% endif %}
+
+<span style="margin:0 10px;font-weight:bold;">
+Page {{ receipts.number }} of {{ receipts.paginator.num_pages }}
+</span>
+
+{% if receipts.has_next %}
+<a href="?page={{ receipts.next_page_number }}" class="action-btn">Next</a>
+{% endif %}
+
+</div>
+
+</div>
+
+</div>
+
+</body>
+
+</html>

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Categories</title>
+
+    {% include "styles.html" %}
+
+</head>
+
+<body>
+
+<!-- SIDEBAR -->
+
+<div class="sidebar">
+
+    {% load static %}
+
+    <div class="sidebar-profile">
+
+        <img src="{% static 'images/user.png' %}" class="profile-img">
+
+        <div class="profile-name">
+            {{ request.user.username }}
+        </div>
+
+    </div>
+
+    <a href="/admin/">Admin Panel</a>
+    <a href="/">Expense Tracker Dashboard</a>
+    <a href="/expenses/">Expenses</a>
+    <a href="/categories/">Categories</a>
+    <a href="/budgets/">Budgets</a>
+    <a href="/receipts/">Receipts</a>
+    <a href="/chatbot/">Chatbot</a>
+
+</div>
+
+
+<!-- MAIN CONTENT -->
+
+<div class="main-content">
+
+<h1 class="dashboard-title">Categories</h1>
+
+
+<div class="table-card">
+
+
+<div class="table-actions">
+
+<form method="POST" enctype="multipart/form-data" style="display:flex; gap:10px;">
+{% csrf_token %}
+
+
+</form>
+
+<a href="{% url 'export_data' 'categories' %}" class="action-btn">Export </a>
+
+</div>
+
+
+<table>
+
+<thead class="table-header">
+
+<tr>
+<th>#</th>
+<th>Name</th>
+<th>Subcategory</th>
+<th>Created At</th>
+</tr>
+
+</thead>
+
+<tbody>
+
+{% for category in categories %}
+
+<tr>
+
+<td>{{ forloop.counter }}</td>
+
+<td>{{ category.name }}</td>
+
+<td>{{ category.subcategory }}</td>
+
+<td>{{ category.created_at }}</td>
+
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+<div style="margin-top:20px;text-align:center;">
+
+{% if categories.has_previous %}
+<a href="?page={{ categories.previous_page_number }}" class="action-btn">Previous</a>
+{% endif %}
+
+<span style="margin:0 10px;font-weight:bold;">
+Page {{ categories.number }} of {{ categories.paginator.num_pages }}
+</span>
+
+{% if categories.has_next %}
+<a href="?page={{ categories.next_page_number }}" class="action-btn">Next</a>
+{% endif %}
+
+</div>
+
+</div>
+
+</body>
+
+</html>

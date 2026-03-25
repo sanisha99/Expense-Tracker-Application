@@ -1,0 +1,145 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+
+<title>Expense Tracker Dashboard</title>
+
+<!-- Bootstrap CSS -->
+<link rel="stylesheet"
+href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+
+<!-- Flatpickr Calendar CSS -->
+<link rel="stylesheet"
+href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+{% include "styles.html" %}
+
+</head>
+
+<body>
+
+<!-- Sidebar -->
+
+<div class="sidebar">
+
+<div class="sidebar-profile">
+
+    <img src="{% static 'images/user.png' %}" class="profile-img">
+
+    <div class="profile-name">
+        {{ request.user.username }}
+    </div>
+
+</div>
+
+<a href="/admin">Admin</a>
+<a href="/" class="active">Expense Tracker Dashboard</a>
+<a href="/expenses/">Expenses</a>
+<a href="/categories/">Categories</a>
+<a href="/budgets/">Budgets</a>
+<a href="/receipts/">Receipts</a>
+<a href="/chatbot/">Chatbot</a>
+
+</div>
+
+
+<!-- Main Page Content -->
+
+<div class="main-content">
+
+<div class="dashboard-header">
+
+<h1 class="dashboard-title">
+
+    <img src="{% static 'images/logo.png' %}" class="dashboard-logo">
+
+    Expense Tracker Dashboard
+
+</h1>
+
+<div class="date-filter">
+<input type="text" id="dateRange" placeholder="Filter by Date" value="{{ selected_dates }}">
+</div>
+
+</div>
+
+{% if budget_message %}
+
+<div class="budget-alert 
+    {% if budget_level == 'danger' %}budget-danger
+    {% elif budget_level == 'high' %}budget-high
+    {% elif budget_level == 'medium' %}budget-medium
+    {% else %}budget-low
+    {% endif %}
+">
+
+    <strong>{{ budget_message }}</strong>
+
+    <div class="budget-bar">
+        <div class="budget-fill fill-{{ budget_level }}"
+            style="width: {{ budget_percent }}%;">
+        </div>
+    </div>
+</div>
+
+{% endif %}
+
+
+<!-- Cards -->
+
+<div class="cards">
+
+<div class="card-box">
+<div class="card-value">${{ total_expenses }}</div>
+<div class="card-title">Total Expenses</div>
+</div>
+
+<div class="card-box">
+<div class="card-value">{{ total_records }}</div>
+<div class="card-title">Total Records</div>
+</div>
+
+<div class="card-box">
+<div class="card-value">{{ total_categories }}</div>
+<div class="card-title">Categories Used</div>
+</div>
+
+<div class="card-box">
+<div class="card-value">${{ total_spending }}</div>
+<div class="card-title">Total Spending</div>
+</div>
+
+</div>
+
+
+<!-- Charts Section -->
+{% include "charts.html" %}
+
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+<script>
+
+flatpickr("#dateRange",{
+mode:"range",
+dateFormat:"Y-m-d",
+
+onClose:function(selectedDates,dateStr){
+
+if(dateStr){
+window.location.href="?dates="+dateStr;
+}
+
+}
+
+});
+
+</script>
+
+</body>
+</html>
+
+{% include 'chatbot_widget.html' %}

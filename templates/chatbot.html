@@ -1,0 +1,181 @@
+{% include 'styles.html' %}
+{% load static %}
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+    <div class="sidebar-profile">
+
+    <img src="{% static 'images/user.png' %}" class="profile-img">
+
+    <div class="profile-name">
+        {{ request.user.username }}
+    </div>
+
+</div>
+
+    <h5>Expense Tracker</h5>
+
+    <a href="/admin/">Admin</a>
+    <a href="/">Expense Tracker Dashboard</a>
+    <a href="/expenses/">Expenses</a>
+    <a href="/categories/">Categories</a>
+    <a href="/budgets/">Budgets</a>
+    <a href="/receipts/">Receipts</a>
+    <a href="/chatbot/" class="active">Chatbot</a>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="main-content">
+
+    <h2 class="dashboard-title">AI Expense Assistant</h2>
+
+    <!-- CHAT CARD -->
+    <div class="table-card" style="height:75vh; display:flex; flex-direction:column;">
+
+        <!-- CHAT BOX -->
+        <div id="chat-box" style="flex:1; overflow-y:auto; margin-bottom:15px;">
+
+            {% for chat in chat_history %}
+                {% if chat.role == "user" %}
+                    <div style="text-align:right; margin-bottom:12px;">
+                        <div style="
+                            display:inline-block;
+                            background:#3c8dbc;
+                            color:white;
+                            padding:10px 14px;
+                            border-radius:10px;
+                            max-width:70%;
+                        ">
+                            {{ chat.message }}
+                        </div>
+                    </div>
+                {% else %}
+                    <div style="text-align:left; margin-bottom:12px;">
+                        <div style="
+                            display:inline-block;
+                            background:#f1f3f5;
+                            padding:10px 14px;
+                            border-radius:10px;
+                            max-width:70%;
+                        ">
+                            {{ chat.message }}
+                        </div>
+                    </div>
+                {% endif %}
+            {% endfor %}
+
+        </div>
+
+        <!-- INPUT -->
+        <div style="display:flex; gap:10px;">
+            <input type="text" id="user-input" placeholder="Ask about your expenses..."
+                   style="flex:1; padding:12px; border-radius:8px; border:1px solid #ddd;">
+            
+            <button class="action-btn" onclick="sendMessage()">Send</button>
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+function appendMessage(sender, message) {
+    const chatBox = document.getElementById("chat-box");
+
+    const msgDiv = document.createElement("div");
+    msgDiv.style.marginBottom = "12px";
+
+    if (sender === "user") {
+        msgDiv.innerHTML = `
+            <div style="text-align:right;">
+                <div style="
+                    display:inline-block;
+                    background:#3c8dbc;
+                    color:white;
+                    padding:10px 14px;
+                    border-radius:10px;
+                    max-width:70%;
+                ">
+                    ${message}
+                </div>
+            </div>`;
+    } else {
+        msgDiv.innerHTML = `
+            <div style="text-align:left;">
+                <div style="
+                    display:inline-block;
+                    background:#f1f3f5;
+                    padding:10px 14px;
+                    border-radius:10px;
+                    max-width:70%;
+                ">
+                    ${message}
+                </div>
+            </div>`;
+    }
+
+    chatBox.appendChild(msgDiv);
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+
+function sendMessage() {
+    const input = document.getElementById("user-input");
+    const question = input.value;
+
+    if (!question) return;
+
+    appendMessage("user", question);
+    input.value = "";
+
+    const chatBox = document.getElementById("chat-box");
+
+    // Add temporary thinking message
+    const thinkingDiv = document.createElement("div");
+    thinkingDiv.innerHTML = `
+        <div style="text-align:left;">
+            <div style="
+                display:inline-block;
+                background:#f1f3f5;
+                padding:10px 14px;
+                border-radius:10px;
+            ">
+                Thinking...
+            </div>
+        </div>`;
+    chatBox.appendChild(thinkingDiv);
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    fetch(`/chatbot/?q=${encodeURIComponent(question)}`)
+        .then(res => res.json())
+        .then(data => {
+            // remove thinking
+            chatBox.removeChild(thinkingDiv);
+
+            // show response
+            appendMessage("bot", data.answer || "No response received.");
+        })
+        .catch(err => {
+            chatBox.removeChild(thinkingDiv);
+            appendMessage("bot", "Error getting response.");
+            console.error(err);
+        });
+}
+
+
+// ENTER KEY SUPPORT
+document.getElementById("user-input").addEventListener("keypress", function(e) {
+    if (e.key === "Enter") {
+        sendMessage();
+    }
+});
+
+</script>
+
+<script>
+window.onload = function() {
+    const chatBox = document.getElementById("chat-box");
+    chatBox.scrollTop = chatBox.scrollHeight;
+};
+</script>

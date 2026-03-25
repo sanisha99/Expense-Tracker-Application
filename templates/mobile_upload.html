@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Scan Receipt</title>
+
+<style>
+
+body{
+font-family: Arial;
+text-align:center;
+padding:40px;
+background:#f5f7fa;
+}
+
+h2{
+color:#3c8dbc;
+}
+
+button{
+background:#3c8dbc;
+color:white;
+padding:12px 20px;
+border:none;
+border-radius:6px;
+font-size:16px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h2>Scan Your Receipt</h2>
+
+
+<!-- MESSAGE DISPLAY START -->
+
+{% if message %}
+<div style="
+background:#d4edda;
+color:#155724;
+padding:10px;
+border-radius:6px;
+margin-bottom:20px;
+">
+{{ message }}
+</div>
+{% endif %}
+
+<!-- MESSAGE DISPLAY END -->
+
+
+<form method="POST" enctype="multipart/form-data">
+
+{% csrf_token %}
+
+<input 
+type="file"
+name="receipt_image"
+accept="image/*"
+capture="environment"
+required
+>
+
+<br><br>
+
+<button type="submit">
+Upload & Scan
+</button>
+
+</form>
+
+</body>
+
+</html>

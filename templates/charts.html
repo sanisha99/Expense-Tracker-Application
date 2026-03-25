@@ -1,0 +1,142 @@
+<div class="charts-wrapper">
+
+<div class="chart-card">
+
+<h4>Expense Distribution</h4>
+
+<div class="chart-container">
+<canvas id="donutChart"></canvas>
+</div>
+
+</div>
+
+
+<div class="chart-card">
+
+<h4>Total Balance / Monthly Spending</h4>
+
+<div class="chart-container">
+<canvas id="barChart"></canvas>
+</div>
+
+</div>
+
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+
+const categoryLabels = {{ category_labels|safe }};
+const categoryData = {{ category_data|safe }};
+
+const monthlyLabels = {{ monthly_labels|safe }};
+const monthlyData = {{ monthly_data|safe }};
+
+
+/* DONUT CHART */
+
+const donutCtx = document.getElementById('donutChart');
+
+new Chart(donutCtx, {
+
+type: 'doughnut',
+
+data: {
+
+labels: categoryLabels,
+
+datasets: [{
+data: categoryData,
+
+backgroundColor: [
+'#4dc9f6',
+'#f67019',
+'#f53794',
+'#537bc4',
+'#acc236',
+'#166a8f',
+'#00a65a',
+'#ffce56'
+]
+
+}]
+
+},
+
+options: {
+
+responsive:true,
+maintainAspectRatio:false,
+
+plugins:{
+legend:{
+position:'right'
+}
+}
+
+}
+
+});
+
+
+
+/* BAR CHART */
+
+const barCtx = document.getElementById('barChart');
+
+new Chart(barCtx, {
+
+type:'bar',
+
+data:{
+
+labels: monthlyLabels,
+
+datasets:[{
+
+label:'Monthly Spending',
+
+data:monthlyData,
+
+backgroundColor:'#3c8dbc',
+borderRadius:6,
+barPercentage:0.4,
+categoryPercentage:0.5,
+maxBarThickness:80
+
+}]
+
+},
+
+options:{
+
+responsive:true,
+maintainAspectRatio:false,
+
+plugins:{
+legend:{
+position:'top'
+}
+},
+
+scales:{
+
+x:{
+grid:{
+display:false
+}
+},
+
+y:{
+beginAtZero:true
+}
+
+}
+
+}
+
+});
+
+</script>
