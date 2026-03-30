@@ -49,7 +49,27 @@
 <div class="table-actions">
 
 <div class="left-actions">
-    <a href="{% url 'qr_code' %}" class="action-btn">Scan via QR</a>
+     <!-- QR BUTTON -->
+    <a href="{% url 'qr_code' %}" class="action-btn">
+        Scan via QR
+    </a>
+
+    <!-- SEARCH BELOW QR -->
+    <form method="GET" style="display:flex; gap:8px;">
+
+        <input 
+            type="text" 
+            name="search"
+            placeholder="Search item..."
+            value="{{ request.GET.search }}"
+            style="padding:8px 12px; font-size:14px; min-width:180px;"
+        >
+
+        <button type="submit" class="action-btn">
+            Search
+        </button>
+
+    </form>
 </div>
 
 <div class="right-actions">
@@ -64,36 +84,38 @@
 
 </div>
 
+<div style="margin-bottom:15px;">
+<label><input type="checkbox" class="column-toggle" data-column="1" checked> Item</label>
+<label><input type="checkbox" class="column-toggle" data-column="2" checked> Total Amount</label>
+<label><input type="checkbox" class="column-toggle" data-column="3" checked> Tax Amount</label>
+<label><input type="checkbox" class="column-toggle" data-column="4" checked> Uploaded By</label>
+<label><input type="checkbox" class="column-toggle" data-column="5" checked> Created At</label>
+</div>
 
 <table>
 
 <thead class="table-header">
-
-<tr>
-<th>#</th>
-<th>Item</th>
-<th>Total Amount</th>
-<th>Tax Amount</th>
-<th>Uploaded By</th>
-<th>Created At</th>
+<tr id="column-header">
+    <th>#</th>
+    <th class="drag-col" draggable="true">Item</th>
+    <th class="drag-col" draggable="true">Total Amount</th>
+    <th class="drag-col" draggable="true">Tax Amount</th>
+    <th class="drag-col" draggable="true">Uploaded By</th>
+    <th class="drag-col" draggable="true">Created At</th>
 </tr>
-
 </thead>
 
 <tbody>
 
 {% for receipt in receipts %}
-
 <tr>
-<td>{{ forloop.counter }}</td>
-<td>{{ receipt.item }}</td>
-<td>${{ receipt.total_amount }}</td>
-<td>${{ receipt.tax_amount }}</td>
-<td>{{ receipt.uploaded_by }}</td>
-<td>{{ receipt.created_at }}</td>
-
+    <td>{{ forloop.counter }}</td>
+    <td>{{ receipt.item }}</td>
+    <td>${{ receipt.total_amount }}</td>
+    <td>${{ receipt.tax_amount }}</td>
+    <td>{{ receipt.uploaded_by }}</td>
+    <td>{{ receipt.created_at }}</td>
 </tr>
-
 {% endfor %}
 
 </tbody>
@@ -103,7 +125,9 @@
 <div style="margin-top:20px;text-align:center;">
 
 {% if receipts.has_previous %}
-<a href="?page={{ receipts.previous_page_number }}" class="action-btn">Previous</a>
+<a href="?page={{ receipts.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="action-btn">
+    Previous
+</a>
 {% endif %}
 
 <span style="margin:0 10px;font-weight:bold;">
@@ -111,7 +135,9 @@ Page {{ receipts.number }} of {{ receipts.paginator.num_pages }}
 </span>
 
 {% if receipts.has_next %}
-<a href="?page={{ receipts.next_page_number }}" class="action-btn">Next</a>
+<a href="?page={{ receipts.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="action-btn">
+    Next
+</a>
 {% endif %}
 
 </div>
@@ -119,6 +145,46 @@ Page {{ receipts.number }} of {{ receipts.paginator.num_pages }}
 </div>
 
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function(){
+
+    const headerRow = document.getElementById("column-header");
+    const table = headerRow.closest("table");
+
+    new Sortable(headerRow,{
+        animation:150,
+        draggable:"th:not(:first-child)",
+
+        onEnd: function (evt) {
+
+            const fromIndex = evt.oldIndex;
+            const toIndex = evt.newIndex;
+
+            // Apply same change to ALL rows
+            Array.from(table.rows).forEach(row => {
+
+                const cells = row.children;
+
+                if (cells[fromIndex] && cells[toIndex]) {
+
+                    if (fromIndex < toIndex) {
+                        row.insertBefore(cells[fromIndex], cells[toIndex].nextSibling);
+                    } else {
+                        row.insertBefore(cells[fromIndex], cells[toIndex]);
+                    }
+
+                }
+
+            });
+
+        }
+    });
+
+});
+</script>
 
 </body>
 

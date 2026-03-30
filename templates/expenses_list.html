@@ -3,32 +3,26 @@
 
 <head>
     <title>Expenses</title>
-
     {% include "styles.html" %}
-
 </head>
 
 <body>
 
 <!-- SIDEBAR -->
-
 <div class="sidebar">
 
     {% load static %}
 
     <div class="sidebar-profile">
-
         <img src="{% static 'images/user.png' %}" class="profile-img">
-
         <div class="profile-name">
             {{ request.user.username }}
         </div>
-
     </div>
-    
+
     <a href="/admin/">Admin Panel</a>
     <a href="/">Expense Tracker Dashboard</a>
-    <a href="/expenses/">Expenses</a>
+    <a href="/expenses/" class="active">Expenses</a>
     <a href="/categories/">Categories</a>
     <a href="/budgets/">Budgets</a>
     <a href="/receipts/">Receipts</a>
@@ -36,58 +30,54 @@
 
 </div>
 
-
 <!-- MAIN CONTENT -->
-
 <div class="main-content">
 
 <h1 class="dashboard-title">Expenses</h1>
 
-
 <div class="table-card">
 
+<!-- 🔥 TOP ACTION BAR -->
 <div class="table-actions">
 
-<form method="POST" enctype="multipart/form-data" style="display:flex; gap:10px; align-items:center;">
-{% csrf_token %}
+    <!-- IMPORT -->
+    <form method="POST" enctype="multipart/form-data" class="left-actions" style="gap: 6px;>
+        {% csrf_token %}
+        <input type="file" name="import_file" style="font-size:14px;">
+        <button type="submit" class="action-btn" style="padding:9px 18px;">Import</button>
+    </form>
 
-<input type="file" name="import_file">
+    <!-- FILTER -->
+    <form method="GET" class="right-actions">
+        <select name="category" style="padding:10px 12px; font-size:14px; min-width:160px;">
+            <option value="">All Categories</option>
+            {% for cat in categories %}
+                <option value="{{ cat }}"
+                    {% if request.GET.category == cat %}selected{% endif %}>
+                    {{ cat }}
+                </option>
+            {% endfor %}
+        </select>
 
-<button type="submit" class="action-btn">
-Import File
-</button>
+        <button type="submit" class="action-btn" style="padding:10px 18px;">Filter</button>
 
-</form>
-
-<a href="{% url 'export_data' 'expenses' %}" class="action-btn">Export </a>
+        <a href="{% url 'export_data' 'expenses' %}" 
+           class="action-btn" 
+           style="padding:10px 18px;">
+            Export
+        </a>
+    </form>
 
 </div>
 
-
+<!-- MESSAGE -->
 {% if message %}
 <div style="background:#f8d7da;color:#721c24;padding:10px;border-radius:6px;margin-bottom:15px;">
-{{ message }}
+    {{ message }}
 </div>
 {% endif %}
 
-<form method="GET" style="margin-bottom:15px; display:flex; gap:10px;">
-
-<select name="category">
-
-<option value="">All Categories</option>
-
-{% for category in categories %}
-<option value="{{ category.name }}">
-{{ category.name }}
-</option>
-{% endfor %}
-
-</select>
-
-<button type="submit" class="action-btn">Filter</button>
-
-</form>
-
+<!-- COLUMN TOGGLES -->
 <div style="margin-bottom:15px;">
 
 <label><input type="checkbox" class="column-toggle" data-column="1" checked> Date</label>
@@ -99,10 +89,10 @@ Import File
 
 </div>
 
+<!-- TABLE -->
 <table id="expense-table">
 
 <thead class="table-header">
-
 <tr id="column-header">
     <th>#</th>
     <th class="drag-col" draggable="true">Date</th>
@@ -112,75 +102,64 @@ Import File
     <th class="drag-col" draggable="true">Tax Amount</th>
     <th class="drag-col" draggable="true">Total Amount</th>
 </tr>
-
 </thead>
 
 <tbody>
 
-
 {% for expense in expenses %}
 <tr>
-
-<td>{{ forloop.counter }}</td>
-
-<td>{{ expense.date }}</td>
-
-<td>{{ expense.item }}</td>
-
-<td>{{ expense.category.name }}</td>
-
-<td>{{ expense.tax_rate }}</td>
-
-<td>${{ expense.tax_amount }}</td>
-
-<td>${{ expense.amount|add:expense.tax_amount }}</td>
-
+    <td>{{ forloop.counter }}</td>
+    <td>{{ expense.date }}</td>
+    <td>{{ expense.item }}</td>
+    <td>{{ expense.category.name }}</td>
+    <td>{{ expense.tax_rate }}</td>
+    <td>${{ expense.tax_amount }}</td>
+    <td>${{ expense.amount|add:expense.tax_amount }}</td>
 </tr>
-
 {% endfor %}
 
 </tbody>
-
 </table>
 
+<!-- PAGINATION -->
 <div style="margin-top:20px;text-align:center;">
 
 {% if expenses.has_previous %}
-<a href="?page={{ expenses.previous_page_number }}" class="action-btn">Previous</a>
+<a href="?page={{ expenses.previous_page_number }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}" class="action-btn">
+    Previous
+</a>
 {% endif %}
 
 <span style="margin:0 10px;font-weight:bold;">
-Page {{ expenses.number }} of {{ expenses.paginator.num_pages }}
+    Page {{ expenses.number }} of {{ expenses.paginator.num_pages }}
 </span>
 
 {% if expenses.has_next %}
-<a href="?page={{ expenses.next_page_number }}" class="action-btn">Next</a>
+<a href="?page={{ expenses.next_page_number }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}" class="action-btn">
+    Next
+</a>
 {% endif %}
 
 </div>
 
 </div>
-
 </div>
 
+<!-- SORTABLE -->
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
 <script>
-
 document.addEventListener("DOMContentLoaded", function(){
 
 const headerRow = document.getElementById("column-header");
 
-// LOAD SAVED COLUMN ORDER
 const savedOrder = JSON.parse(localStorage.getItem("columnOrder"));
 
 if (savedOrder) {
-
     const table = headerRow.closest("table");
     const rows = table.querySelectorAll("tr");
 
     rows.forEach(row => {
-
         const cells = Array.from(row.children);
         const newCells = [];
 
@@ -192,51 +171,18 @@ if (savedOrder) {
 
         row.innerHTML = "";
         newCells.forEach(c => row.appendChild(c));
-
     });
-
 }
 
-// INITIALIZE SORTABLE
 new Sortable(headerRow,{
     animation:150,
     draggable:"th:not(:first-child)",
-
-    onEnd:function(evt){
-
-        const table = headerRow.closest("table");
-        const rows = table.querySelectorAll("tbody tr");
-
-        rows.forEach(row=>{
-
-            const cells = Array.from(row.children);
-            const moved = cells.splice(evt.oldIndex,1)[0];
-            cells.splice(evt.newIndex,0,moved);
-
-            row.innerHTML="";
-            cells.forEach(cell=>row.appendChild(cell));
-
-        });
-
-        // SAVE COLUMN ORDER (BY INDEX)
-        const order = [];
-
-        document.querySelectorAll("#column-header th").forEach((th, index) => {
-            order.push(index);
-        });
-
-        localStorage.setItem("columnOrder", JSON.stringify(order));
-
-    }
 });
-
 });
-
 </script>
 
-
+<!-- COLUMN TOGGLE -->
 <script>
-
 document.querySelectorAll(".column-toggle").forEach(toggle => {
 
     toggle.addEventListener("change", function(){
@@ -249,55 +195,41 @@ document.querySelectorAll(".column-toggle").forEach(toggle => {
             }
         });
 
-        localStorage.setItem("hiddenColumns", JSON.stringify(hiddenColumns));
+        localStorage.setItem("expense-hiddenColumns", JSON.stringify(hiddenColumns));
 
         const column = this.dataset.column;
         const visible = this.checked;
 
         document.querySelectorAll("table tr").forEach(row => {
-
             const cell = row.children[column];
-
             if(cell){
                 cell.style.display = visible ? "" : "none";
             }
-
         });
 
     });
 
 });
 
-
-// LOAD HIDDEN COLUMNS
 const hidden = JSON.parse(localStorage.getItem("hiddenColumns"));
 
 if (hidden){
-
     hidden.forEach(col => {
 
         document.querySelectorAll("table tr").forEach(row => {
-
             const cell = row.children[col];
-
             if(cell){
                 cell.style.display = "none";
             }
-
         });
 
         const checkbox = document.querySelector(`.column-toggle[data-column="${col}"]`);
         if(checkbox){
             checkbox.checked = false;
         }
-
     });
-
 }
-
 </script>
 
-
 </body>
-
 </html>

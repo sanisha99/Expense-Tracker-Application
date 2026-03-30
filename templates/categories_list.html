@@ -49,14 +49,28 @@
 
 <div class="table-actions">
 
-<form method="POST" enctype="multipart/form-data" style="display:flex; gap:10px;">
-{% csrf_token %}
+    <form method="GET" style="display:flex; gap:10px;">
 
+        <input 
+            type="text" 
+            name="search"
+            placeholder="Search category..."
+            value="{{ request.GET.search }}"
+            style="padding:8px 12px; min-width:180px;"
+        >
 
-</form>
+        <button type="submit" class="action-btn">
+            Search
+        </button>
 
-<a href="{% url 'export_data' 'categories' %}" class="action-btn">Export </a>
+    </form>
 
+</div>
+
+<div style="margin-bottom:15px;">
+<label><input type="checkbox" class="column-toggle" data-column="1" checked> Name</label>
+<label><input type="checkbox" class="column-toggle" data-column="2" checked> Subcategory</label>
+<label><input type="checkbox" class="column-toggle" data-column="3" checked> Created At</label>
 </div>
 
 
@@ -64,11 +78,11 @@
 
 <thead class="table-header">
 
-<tr>
-<th>#</th>
-<th>Name</th>
-<th>Subcategory</th>
-<th>Created At</th>
+<tr id="column-header">
+    <th>#</th>
+    <th class="drag-col" draggable="true">Name</th>
+    <th class="drag-col" draggable="true">Subcategory</th>
+    <th class="drag-col" draggable="true">Created At</th>
 </tr>
 
 </thead>
@@ -78,15 +92,10 @@
 {% for category in categories %}
 
 <tr>
-
 <td>{{ forloop.counter }}</td>
-
 <td>{{ category.name }}</td>
-
 <td>{{ category.subcategory }}</td>
-
 <td>{{ category.created_at }}</td>
-
 </tr>
 
 {% endfor %}
@@ -98,7 +107,9 @@
 <div style="margin-top:20px;text-align:center;">
 
 {% if categories.has_previous %}
-<a href="?page={{ categories.previous_page_number }}" class="action-btn">Previous</a>
+<a href="?page={{ categories.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="action-btn">
+    Previous
+</a>
 {% endif %}
 
 <span style="margin:0 10px;font-weight:bold;">
@@ -106,12 +117,99 @@ Page {{ categories.number }} of {{ categories.paginator.num_pages }}
 </span>
 
 {% if categories.has_next %}
-<a href="?page={{ categories.next_page_number }}" class="action-btn">Next</a>
+<a href="?page={{ categories.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="action-btn">
+    Next
+</a>
 {% endif %}
 
 </div>
 
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function(){
+
+const headerRow = document.getElementById("column-header");
+
+const savedOrder = JSON.parse(localStorage.getItem("columnOrder"));
+
+if (savedOrder) {
+    const table = headerRow.closest("table");
+    const rows = table.querySelectorAll("tr");
+
+    rows.forEach(row => {
+        const cells = Array.from(row.children);
+        const newCells = [];
+
+        savedOrder.forEach(index => {
+            if (cells[index] !== undefined) {
+                newCells.push(cells[index]);
+            }
+        });
+
+        row.innerHTML = "";
+        newCells.forEach(c => row.appendChild(c));
+    });
+}
+
+new Sortable(headerRow,{
+    animation:150,
+    draggable:"th:not(:first-child)",
+});
+});
+</script>
+
+<!-- COLUMN TOGGLE -->
+<script>
+document.querySelectorAll(".column-toggle").forEach(toggle => {
+
+    toggle.addEventListener("change", function(){
+
+        const hiddenColumns = [];
+
+        document.querySelectorAll(".column-toggle").forEach(cb => {
+            if (!cb.checked){
+                hiddenColumns.push(cb.dataset.column);
+            }
+        });
+
+        localStorage.setItem("categories-hiddenColumns", JSON.stringify(hiddenColumns));
+
+        const column = this.dataset.column;
+        const visible = this.checked;
+
+        document.querySelectorAll("table tr").forEach(row => {
+            const cell = row.children[column];
+            if(cell){
+                cell.style.display = visible ? "" : "none";
+            }
+        });
+
+    });
+
+});
+
+const hidden = JSON.parse(localStorage.getItem("hiddenColumns"));
+
+if (hidden){
+    hidden.forEach(col => {
+
+        document.querySelectorAll("table tr").forEach(row => {
+            const cell = row.children[col];
+            if(cell){
+                cell.style.display = "none";
+            }
+        });
+
+        const checkbox = document.querySelector(`.column-toggle[data-column="${col}"]`);
+        if(checkbox){
+            checkbox.checked = false;
+        }
+    });
+}
+</script>
 
 </body>
 

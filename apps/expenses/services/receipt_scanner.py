@@ -28,6 +28,9 @@ def scan_receipt(image_path):
     if tax_match:
         tax = tax_match.group(1)
 
+    total = float(total) if total else 0
+    tax = float(tax) if tax else 0
+
     return {
         "item": item,
         "total": total,

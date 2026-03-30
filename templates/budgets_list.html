@@ -48,13 +48,48 @@
 
 <div class="table-actions">
 
-<form method="POST" enctype="multipart/form-data" style="display:flex; gap:10px;">
-{% csrf_token %}
+    <form method="GET" style="display:flex; gap:10px; align-items:center;">
 
+    <!-- FROM -->
+    <input 
+        type="month" 
+        name="start_month"
+        value="{{ request.GET.start_month }}"
+        style="padding:8px 12px;"
+    >
+
+    <span>to</span>
+
+    <!-- TO -->
+    <input 
+        type="month" 
+        name="end_month"
+        value="{{ request.GET.end_month }}"
+        style="padding:8px 12px;"
+    >
+
+    <button type="submit" class="action-btn">
+        Filter
+    </button>
 
 </form>
 
-<a href="{% url 'export_data' 'budgets' %}" class="action-btn">Export</a>
+    <!-- RIGHT: EXPORT -->
+    <a href="{% url 'export_data' 'budgets' %}" class="action-btn">
+        Export
+    </a>
+
+</div>
+
+
+<!-- COLUMN TOGGLES -->
+<div style="margin-bottom:15px;">
+
+<label><input type="checkbox" class="column-toggle" data-column="1" checked> Month</label>
+<label><input type="checkbox" class="column-toggle" data-column="2" checked> Total Income</label>
+<label><input type="checkbox" class="column-toggle" data-column="3" checked> Budget Limit</label>
+<label><input type="checkbox" class="column-toggle" data-column="4" checked> Created By</label>
+<label><input type="checkbox" class="column-toggle" data-column="5" checked> Created At</label>
 
 </div>
 
@@ -62,40 +97,160 @@
 <table>
 
 <thead class="table-header">
-
-<tr>
-<th>Month</th>
-<th>Total Income</th>
-<th>Budget Limit</th>
-<th>Created By</th>
-<th>Created At</th>
+<tr id="column-header">
+    <th>#</th>
+    <th class="drag-col" draggable="true">Month</th>
+    <th class="drag-col" draggable="true">Total Income</th>
+    <th class="drag-col" draggable="true">Budget Limit</th>
+    <th class="drag-col" draggable="true">Created By</th>
+    <th class="drag-col" draggable="true">Created At</th>
 </tr>
-
 </thead>
 
 <tbody>
 
 {% for budget in budgets %}
-
 <tr>
-
-<td>{{ budget.month }}</td>
-<td>${{ budget.total_income }}</td>
-<td>${{ budget.budget_limit }}</td>
-<td>{{ budget.created_by }}</td>
-<td>{{ budget.created_at }}</td>
-
+    <td>{{ forloop.counter }}</td>
+    <td>{{ budget.month }}</td>
+    <td>${{ budget.total_income }}</td>
+    <td>${{ budget.budget_limit }}</td>
+    <td>{{ budget.created_by }}</td>
+    <td>{{ budget.created_at }}</td>
 </tr>
-
 {% endfor %}
 
 </tbody>
 
 </table>
 
+<div style="margin-top:20px;text-align:center;">
+
+{% if budgets.has_previous %}
+    <a href="?page={{ budgets.previous_page_number }}
+    {% if request.GET.start_month %}&start_month={{ request.GET.start_month }}{% endif %}
+    {% if request.GET.end_month %}&end_month={{ request.GET.end_month }}{% endif %}"
+    class="action-btn">
+    Previous
+</a>
+{% endif %}
+
+<span style="margin:0 10px;font-weight:bold;">
+    Page {{ budgets.number }} of {{ budgets.paginator.num_pages }}
+</span>
+
+{% if budgets.has_next %}
+    <a href="?page={{ budgets.next_page_number }}
+    {% if request.GET.start_month %}&start_month={{ request.GET.start_month }}{% endif %}
+    {% if request.GET.end_month %}&end_month={{ request.GET.end_month }}{% endif %}"
+    class="action-btn">
+    Next
+</a>
+{% endif %}
+
 </div>
 
 </div>
+
+</div>
+
+<!-- SORTABLE -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function(){
+
+const headerRow = document.getElementById("column-header");
+
+const savedOrder = JSON.parse(localStorage.getItem("budgets-columnOrder"));
+
+if (savedOrder) {
+    const table = headerRow.closest("table");
+    const rows = table.querySelectorAll("tr");
+
+    rows.forEach(row => {
+        const cells = Array.from(row.children);
+        const newCells = [];
+
+        savedOrder.forEach(index => {
+            if (cells[index] !== undefined) {
+                newCells.push(cells[index]);
+            }
+        });
+
+        row.innerHTML = "";
+        newCells.forEach(c => row.appendChild(c));
+    });
+}
+
+new Sortable(headerRow,{
+    animation:150,
+    draggable:"th:not(:first-child)",
+
+    onEnd: function () {
+
+        const order = [];
+
+        headerRow.querySelectorAll("th").forEach((th, index) => {
+            order.push(index);
+        });
+
+        localStorage.setItem("budgets-columnOrder", JSON.stringify(order));
+    }
+});
+});
+</script>
+
+<!-- COLUMN TOGGLE -->
+<script>
+document.querySelectorAll(".column-toggle").forEach(toggle => {
+
+    toggle.addEventListener("change", function(){
+
+        const hiddenColumns = [];
+
+        document.querySelectorAll(".column-toggle").forEach(cb => {
+            if (!cb.checked){
+                hiddenColumns.push(cb.dataset.column);
+            }
+        });
+
+        localStorage.setItem("budgets-hiddenColumns", JSON.stringify(hiddenColumns));
+
+        const column = this.dataset.column;
+        const visible = this.checked;
+
+        document.querySelectorAll("table tr").forEach(row => {
+            const cell = row.children[column];
+            if(cell){
+                cell.style.display = visible ? "" : "none";
+            }
+        });
+
+    });
+
+});
+
+const hidden = JSON.parse(localStorage.getItem("budgets-hiddenColumns"));
+
+if (hidden){
+    hidden.forEach(col => {
+
+        document.querySelectorAll("table tr").forEach(row => {
+            const cell = row.children[col];
+            if(cell){
+                cell.style.display = "none";
+            }
+        });
+
+        const checkbox = document.querySelector(`.column-toggle[data-column="${col}"]`);
+        if(checkbox){
+            checkbox.checked = false;
+        }
+    });
+}
+</script>
+
 
 </body>
 
