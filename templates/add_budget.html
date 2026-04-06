@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add Budget</title>
+    {% include "styles.html" %}
+</head>
+
+<body>
+
+<div class="main-content">
+
+    <h1 class="dashboard-title">Add Budget</h1>
+
+    <div class="table-card" style="max-width:600px;">
+
+        {% if error %}
+            <div style="background:#ffe0e0; color:#c0392b; padding:10px;
+                        border-radius:6px; margin-bottom:15px;">
+                {{ error }}
+            </div>
+        {% endif %}
+
+        <form method="POST">
+            {% csrf_token %}
+
+            <!-- MONTH -->
+            <div style="margin-bottom:15px;">
+                <label>Month</label><br>
+                <input type="month" name="month" required
+                       style="width:100%; padding:10px; border-radius:6px; border:1px solid #ddd;">
+            </div>
+
+            <!-- TOTAL INCOME -->
+            <div style="margin-bottom:15px;">
+                <label>Total Income ($)</label><br>
+                <input type="number" step="0.01" name="total_income" required
+                       placeholder="e.g. 5000"
+                       style="width:100%; padding:10px; border-radius:6px; border:1px solid #ddd;">
+            </div>
+
+            <!-- BUDGET LIMIT -->
+            <div style="margin-bottom:20px;">
+                <label>Budget Limit ($)</label><br>
+                <input type="number" step="0.01" name="budget_limit" required
+                       placeholder="e.g. 3000"
+                       style="width:100%; padding:10px; border-radius:6px; border:1px solid #ddd;">
+            </div>
+
+            <!-- BUTTONS -->
+            <div style="display:flex; gap:10px;">
+                <button type="submit" class="action-btn">
+                    Save Budget
+                </button>
+                <a href="/budgets/" class="action-btn" style="background:#6c757d;">
+                    Cancel
+                </a>
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+</body>
+</html>

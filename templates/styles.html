@@ -128,9 +128,10 @@ background:#f5f7fa;
 
 .charts-wrapper{
 display:grid;
-grid-template-columns:1fr 1fr;
+grid-template-columns:minmax(0, 1fr) minmax(0, 1fr);
 gap:25px;
 margin-top:25px;
+margin-bottom:0;
 }
 
 .chart-card{
@@ -138,6 +139,7 @@ background:white;
 padding:25px;
 border-radius:10px;
 box-shadow:0 2px 10px rgba(0,0,0,0.1);
+min-width:0;  
 }
 
 .chart-card h4{
@@ -185,7 +187,7 @@ font-size:15px;
 
 .cards{
 display:grid;
-grid-template-columns:repeat(4,1fr);
+grid-template-columns:repeat(4, minmax(0, 1fr)); 
 gap:20px;
 margin-bottom:30px;
 }
@@ -196,17 +198,22 @@ padding:20px;
 border-radius:10px;
 box-shadow:0 2px 10px rgba(0,0,0,0.1);
 transition:transform 0.2s ease;
+min-width:0;  
+
 }
 
 .card-box:hover{
 transform:translateY(-3px);
 }
 
+
+
 .card-value{
-font-size:28px;
+font-size:24px;
 font-weight:bold;
 color:#333;
 margin-bottom:6px;
+word-break:break-word;
 }
 
 .card-title{
@@ -367,5 +374,141 @@ BUDGET ALERT
 .fill-low{
     background:#3c8dbc;
 }
+
+/* ================================
+EXPENSE PAGE - ACTION BAR FIXES
+================================ */
+
+/* Allow wrapping instead of breaking layout */
+.table-actions {
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+/* Left side (Filter) */
+.left-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* Right side (Import / Export / Add) */
+.right-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* File + Import grouping */
+.file-import-group {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Fix large default file input */
+.file-import-group input[type="file"] {
+    max-width: 180px;
+    font-size: 13px;
+}
+
+/* Prevent buttons from stretching weirdly */
+.action-btn {
+    white-space: nowrap;
+}
+
+/* ================================
+CHECKBOX ROW (COLUMN SELECT)
+================================ */
+
+.column-toggle-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.column-toggle-row label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 14px;
+}
+
+/* SEARCH INPUT (same as expenses feel) */
+.search-input{
+    padding:10px 12px;
+    font-size:14px;
+    min-width:200px;
+    border-radius:6px;
+    border:1px solid #ddd;
+}
+
+/* SEARCH FORM ALIGNMENT */
+.search-form{
+    display:flex;
+    gap:8px;
+    align-items:center;
+}
+
+/* FILE GROUP */
+.file-import-group{
+    display:flex;
+    gap:10px;
+    align-items:center;
+}
+
+/* ================================
+BOOTSTRAP OVERRIDE FIXES
+================================ */
+
+/* Force charts wrapper to always be 2 columns */
+.charts-wrapper {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+    gap: 25px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+.chart-card {
+    background: white !important;
+    padding: 25px !important;
+    border-radius: 10px !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1) !important;
+    min-width: 0 !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* Force cards to equal width */
+.cards {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 20px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+.card-box {
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+}
+
+/* Fix main content width */
+.main-content {
+    margin-left: 230px !important;
+    padding: 30px 40px !important;
+    box-sizing: border-box !important;
+    width: calc(100% - 230px) !important;
+    overflow-x: hidden !important;
+}
+
+
 </style>
+
+
 

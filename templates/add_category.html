@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add Category</title>
+    {% include "styles.html" %}
+</head>
+
+<body>
+
+<div class="main-content">
+
+    <h1 class="dashboard-title">Add Category</h1>
+
+    <div class="table-card" style="max-width:600px;">
+
+        {% if error %}
+            <div style="background:#ffe0e0; color:#c0392b; padding:10px; 
+                        border-radius:6px; margin-bottom:15px;">
+                {{ error }}
+            </div>
+        {% endif %}
+
+        <form method="POST">
+            {% csrf_token %}
+
+            <!-- CATEGORY NAME -->
+            <div style="margin-bottom:15px;">
+                <label>Category Name</label><br>
+                <input type="text" name="name" required
+                       placeholder="e.g. Food, Shopping, Utility"
+                       style="width:100%; padding:10px; border-radius:6px; border:1px solid #ddd;">
+            </div>
+
+            <!-- SUBCATEGORY -->
+            <div style="margin-bottom:20px;">
+                <label>Subcategory</label><br>
+                <input type="text" name="subcategory" required
+                       placeholder="e.g. Lunch, Groceries, Rent"
+                       style="width:100%; padding:10px; border-radius:6px; border:1px solid #ddd;">
+            </div>
+
+            <!-- BUTTONS -->
+            <div style="display:flex; gap:10px;">
+                <button type="submit" class="action-btn">
+                    Save Category
+                </button>
+                <a href="/categories/" class="action-btn" style="background:#6c757d;">
+                    Cancel
+                </a>
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+</body>
+</html>

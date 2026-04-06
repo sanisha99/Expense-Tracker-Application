@@ -17,13 +17,19 @@ from tablib import Dataset
 from apps.expenses.resources import ReceiptResource
 from django.conf import settings
 import os
+from django.contrib.auth.decorators import login_required
 
 
 def apply_receipt_search(queryset, request):
+
+    # FILTER BY USER (VERY IMPORTANT)
+    if request.user.is_authenticated:
+        queryset = queryset.filter(uploaded_by=request.user)
+
     """
     Search receipts by item
     """
-
+    
     search = request.GET.get("search")
 
     if search:
@@ -31,7 +37,7 @@ def apply_receipt_search(queryset, request):
 
     return queryset
 
-
+@login_required
 def receipts_list(request):
 
     receipts = Receipt.objects.all().order_by("-created_at")

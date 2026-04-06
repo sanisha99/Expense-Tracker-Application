@@ -16,17 +16,38 @@
     <div class="sidebar-profile">
         <img src="{% static 'images/user.png' %}" class="profile-img">
         <div class="profile-name">
-            {{ request.user.username }}
-        </div>
+            {% if request.user.is_authenticated %}
+                {{ request.user.username }}
+            {% else %}
+                Guest
+            {% endif %}
+            </div>
+
+            <!-- LOGIN / LOGOUT BUTTON -->
+            <div style="margin-top:10px; text-align:center;">
+
+            {% if request.user.is_authenticated %}
+                <form method="post" action="{% url 'logout' %}" style="margin-top:10px;">
+                    {% csrf_token %}
+                    <button type="submit" class="action-btn" style="width:100%;">
+                        Logout
+                    </button>
+                </form>
+            {% else %}
+                <a href="{% url 'login' %}" class="action-btn" style="display:block;">
+                    Login
+                </a>
+            {% endif %}
+
+            </div>
     </div>
 
-    <a href="/admin/">Admin Panel</a>
-    <a href="/">Expense Tracker Dashboard</a>
-    <a href="/expenses/" class="active">Expenses</a>
-    <a href="/categories/">Categories</a>
-    <a href="/budgets/">Budgets</a>
-    <a href="/receipts/">Receipts</a>
-    <a href="/chatbot/">Chatbot</a>
+    <a href="{% url 'dashboard' %}" >Tracker Dashboard</a>
+    <a href="{% url 'expenses_list' %}" class="active" >Expenses</a>
+    <a href="{% url 'categories_list' %}">Categories</a>
+    <a href="{% url 'budgets_list' %}">Budgets</a>
+    <a href="{% url 'receipts_list' %}">Receipts</a>
+    <a href="{% url 'chatbot' %}">AI Assistant</a>
 
 </div>
 
@@ -40,15 +61,8 @@
 <!-- 🔥 TOP ACTION BAR -->
 <div class="table-actions">
 
-    <!-- IMPORT -->
-    <form method="POST" enctype="multipart/form-data" class="left-actions" style="gap: 6px;>
-        {% csrf_token %}
-        <input type="file" name="import_file" style="font-size:14px;">
-        <button type="submit" class="action-btn" style="padding:9px 18px;">Import</button>
-    </form>
-
-    <!-- FILTER -->
-    <form method="GET" class="right-actions">
+    <!-- LEFT SIDE (FILTER) -->
+    <form method="GET" class="left-actions">
         <select name="category" style="padding:10px 12px; font-size:14px; min-width:160px;">
             <option value="">All Categories</option>
             {% for cat in categories %}
@@ -59,16 +73,40 @@
             {% endfor %}
         </select>
 
-        <button type="submit" class="action-btn" style="padding:10px 18px;">Filter</button>
+        <button type="submit" class="action-btn" style="padding:10px 18px;">
+            Filter
+        </button>
+    </form>
 
+    <!-- RIGHT SIDE -->
+    <div class="right-actions">
+
+        <!-- IMPORT GROUP -->
+        <form method="POST" enctype="multipart/form-data" class="file-import-group">
+            {% csrf_token %}
+            <label class="action-btn">
+            Upload File <input type="file" name="import_file" hidden>
+            </label>
+            <button type="submit" class="action-btn" style="padding:9px 18px;">
+                Import
+            </button>
+        </form>
+
+        <!-- EXPORT -->
         <a href="{% url 'export_data' 'expenses' %}" 
            class="action-btn" 
            style="padding:10px 18px;">
             Export
         </a>
-    </form>
 
-</div>
+        <!-- ADD -->
+        <a href="{% url 'add_expense' %}" class="action-btn">
+            + Add Expense
+        </a>
+
+        </div>
+
+    </div>
 
 <!-- MESSAGE -->
 {% if message %}
@@ -78,15 +116,13 @@
 {% endif %}
 
 <!-- COLUMN TOGGLES -->
-<div style="margin-bottom:15px;">
-
-<label><input type="checkbox" class="column-toggle" data-column="1" checked> Date</label>
-<label><input type="checkbox" class="column-toggle" data-column="2" checked> Item</label>
-<label><input type="checkbox" class="column-toggle" data-column="3" checked> Category</label>
-<label><input type="checkbox" class="column-toggle" data-column="4" checked> Tax Rate</label>
-<label><input type="checkbox" class="column-toggle" data-column="5" checked> Tax Amount</label>
-<label><input type="checkbox" class="column-toggle" data-column="6" checked> Total Amount</label>
-
+<div class="column-toggle-row">
+    <label><input type="checkbox" class="column-toggle" data-column="1" checked> Date</label>
+    <label><input type="checkbox" class="column-toggle" data-column="2" checked> Item</label>
+    <label><input type="checkbox" class="column-toggle" data-column="3" checked> Category</label>
+    <label><input type="checkbox" class="column-toggle" data-column="4" checked> Tax Rate</label>
+    <label><input type="checkbox" class="column-toggle" data-column="5" checked> Tax Amount</label>
+    <label><input type="checkbox" class="column-toggle" data-column="6" checked> Total Amount</label>
 </div>
 
 <!-- TABLE -->
@@ -101,20 +137,33 @@
     <th class="drag-col" draggable="true">Tax Rate (%)</th>
     <th class="drag-col" draggable="true">Tax Amount</th>
     <th class="drag-col" draggable="true">Total Amount</th>
+    <th>Actions</th>
 </tr>
 </thead>
 
 <tbody>
 
 {% for expense in expenses %}
-<tr>
+<tr data-id="{{ expense.id }}">
     <td>{{ forloop.counter }}</td>
-    <td>{{ expense.date }}</td>
-    <td>{{ expense.item }}</td>
-    <td>{{ expense.category.name }}</td>
-    <td>{{ expense.tax_rate }}</td>
-    <td>${{ expense.tax_amount }}</td>
-    <td>${{ expense.amount|add:expense.tax_amount }}</td>
+    <td class="cell-date">{{ expense.date }}</td>
+    <td class="cell-item">{{ expense.item }}</td>
+    <td class="cell-category" data-category-id="{{ expense.category.id }}">
+        {{ expense.category.name }}
+    </td>
+    <td class="cell-taxrate">{{ expense.tax_rate }}</td>
+    <td class="cell-taxamount">${{ expense.tax_amount }}</td>
+    <td class="cell-total" data-amount="{{ expense.amount }}">${{ expense.amount|add:expense.tax_amount }}</td>
+    <td class="action-cell">
+        <button class="action-btn edit-btn"
+                style="padding:4px 10px; font-size:12px;">
+            Edit
+        </button>
+        <button class="action-btn delete-btn"
+                style="padding:4px 10px; font-size:12px; background:#dc3545;">
+            Delete
+        </button>
+    </td>
 </tr>
 {% endfor %}
 
@@ -148,87 +197,227 @@
 <!-- SORTABLE -->
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
+<!-- COLUMN TOGGLE -->
 <script>
-document.addEventListener("DOMContentLoaded", function(){
+    const CURRENT_USER = "{{ request.user.username }}";
+</script>
 
-const headerRow = document.getElementById("column-header");
+<script>
+document.addEventListener("DOMContentLoaded", function () {
 
-const savedOrder = JSON.parse(localStorage.getItem("columnOrder"));
+    const STORAGE_KEY = `expenses-hiddenColumns-${CURRENT_USER}`;
+    const toggles = document.querySelectorAll(".column-toggle");
 
-if (savedOrder) {
-    const table = headerRow.closest("table");
-    const rows = table.querySelectorAll("tr");
+    // --- Restore saved state from previous session ---
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
 
-    rows.forEach(row => {
-        const cells = Array.from(row.children);
-        const newCells = [];
+    toggles.forEach(cb => {
+        const col = cb.dataset.column;
 
-        savedOrder.forEach(index => {
-            if (cells[index] !== undefined) {
-                newCells.push(cells[index]);
-            }
-        });
-
-        row.innerHTML = "";
-        newCells.forEach(c => row.appendChild(c));
+        if (saved.includes(col)) {
+            cb.checked = false;
+            document.querySelectorAll("table tr").forEach(row => {
+                const cell = row.children[col];
+                if (cell) cell.style.display = "none";
+            });
+        } else {
+            cb.checked = true;
+            document.querySelectorAll("table tr").forEach(row => {
+                const cell = row.children[col];
+                if (cell) cell.style.display = "";
+            });
+        }
     });
-}
 
-new Sortable(headerRow,{
-    animation:150,
-    draggable:"th:not(:first-child)",
-});
+    // --- Save on change ---
+    toggles.forEach(cb => {
+        cb.addEventListener("change", function () {
+
+            const col = this.dataset.column;
+            const visible = this.checked;
+
+            document.querySelectorAll("table tr").forEach(row => {
+                const cell = row.children[col];
+                if (cell) cell.style.display = visible ? "" : "none";
+            });
+
+            const hidden = [];
+            toggles.forEach(c => {
+                if (!c.checked) hidden.push(c.dataset.column);
+            });
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(hidden));
+        });
+    });
+
 });
 </script>
 
-<!-- COLUMN TOGGLE -->
 <script>
-document.querySelectorAll(".column-toggle").forEach(toggle => {
+const CSRF = "{{ csrf_token }}";
+const CATEGORIES = {{ categories_obj|safe }};
 
-    toggle.addEventListener("change", function(){
+function buildCategoryOptions(selectedId) {
+    return CATEGORIES.map(cat =>
+        `<option value="${cat.id}" ${cat.id == selectedId ? "selected" : ""}>${cat.name}</option>`
+    ).join("");
+}
 
-        const hiddenColumns = [];
+function attachEditListeners() {
+    document.querySelectorAll(".edit-btn").forEach(btn => {
+        btn.onclick = function () {
+            const row = this.closest("tr");
+            if (row.classList.contains("editing")) return;
+            row.classList.add("editing");
 
-        document.querySelectorAll(".column-toggle").forEach(cb => {
-            if (!cb.checked){
-                hiddenColumns.push(cb.dataset.column);
-            }
-        });
+            const expenseId    = row.dataset.id;
+            const dateCell     = row.querySelector(".cell-date");
+            const itemCell     = row.querySelector(".cell-item");
+            const categoryCell = row.querySelector(".cell-category");
+            const taxRateCell  = row.querySelector(".cell-taxrate");
+            const taxAmtCell   = row.querySelector(".cell-taxamount");
+            const totalCell    = row.querySelector(".cell-total");
+            const actionCell   = row.querySelector(".action-cell");
 
-        localStorage.setItem("expense-hiddenColumns", JSON.stringify(hiddenColumns));
+            const origDate     = dateCell.textContent.trim();
+            const origItem     = itemCell.textContent.trim();
+            const origCatId    = categoryCell.dataset.categoryId;
+            const origCatName  = categoryCell.textContent.trim();
+            const origTaxRate  = taxRateCell.textContent.trim();
+            const origTaxAmt   = taxAmtCell.textContent.replace("$","").trim();
+            const origTotal    = totalCell.textContent.replace("$","").trim();
 
-        const column = this.dataset.column;
-        const visible = this.checked;
+            const inputStyle = "padding:4px 6px; border-radius:4px; border:1px solid #ccc; font-size:13px;";
 
-        document.querySelectorAll("table tr").forEach(row => {
-            const cell = row.children[column];
-            if(cell){
-                cell.style.display = visible ? "" : "none";
-            }
-        });
+            dateCell.innerHTML     = `<input type="date" value="${origDate}" style="${inputStyle} width:130px;">`;
+            itemCell.innerHTML     = `<input type="text" value="${origItem}" style="${inputStyle} width:100px;">`;
+            categoryCell.innerHTML = `<select style="${inputStyle} width:110px;">${buildCategoryOptions(origCatId)}</select>`;
+            taxRateCell.innerHTML  = `<input type="number" step="0.01" value="${origTaxRate}" style="${inputStyle} width:70px;">`;
+            taxAmtCell.innerHTML   = `<span style="color:#888; font-size:12px;">auto</span>`;
+            totalCell.innerHTML    = `<span style="color:#888; font-size:12px;">auto</span>`;
 
-    });
+            actionCell.innerHTML = `
+                <button class="action-btn save-btn" style="padding:4px 10px; font-size:12px; background:#28a745;">Save</button>
+                <button class="action-btn cancel-btn" style="padding:4px 10px; font-size:12px; background:#6c757d;">Cancel</button>
+            `;
 
-});
+            // CANCEL
+            actionCell.querySelector(".cancel-btn").onclick = function () {
+                dateCell.textContent     = origDate;
+                itemCell.textContent     = origItem;
+                categoryCell.textContent = origCatName;
+                categoryCell.dataset.categoryId = origCatId;
+                taxRateCell.textContent  = origTaxRate;
+                taxAmtCell.textContent   = `$${origTaxAmt}`;
+                totalCell.textContent    = `$${origTotal}`;
+                actionCell.innerHTML = `
+                    <button class="action-btn edit-btn" style="padding:4px 10px; font-size:12px;">Edit</button>
+                    <button class="action-btn delete-btn" style="padding:4px 10px; font-size:12px; background:#dc3545;">Delete</button>
+                `;
+                row.classList.remove("editing");
+                attachEditListeners();
+                attachDeleteListeners();
+            };
 
-const hidden = JSON.parse(localStorage.getItem("hiddenColumns"));
+            // SAVE
+            actionCell.querySelector(".save-btn").onclick = function () {
+                const newDate    = dateCell.querySelector("input").value;
+                const newItem    = itemCell.querySelector("input").value.trim();
+                const newCatId   = categoryCell.querySelector("select").value;
+                const newTaxRate = taxRateCell.querySelector("input").value;
 
-if (hidden){
-    hidden.forEach(col => {
+                // Remove previous inline error
+                const prev = row.nextElementSibling;
+                if (prev && prev.classList.contains("inline-error")) prev.remove();
 
-        document.querySelectorAll("table tr").forEach(row => {
-            const cell = row.children[col];
-            if(cell){
-                cell.style.display = "none";
-            }
-        });
-
-        const checkbox = document.querySelector(`.column-toggle[data-column="${col}"]`);
-        if(checkbox){
-            checkbox.checked = false;
-        }
+                fetch(`/expenses/${expenseId}/edit/`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": CSRF
+                    },
+                    body: JSON.stringify({
+                        item: newItem,
+                        amount: totalCell.dataset.amount,   
+                        date: newDate,
+                        tax_rate: newTaxRate,
+                        category_id: newCatId
+                    })
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        dateCell.textContent     = data.date;
+                        itemCell.textContent     = data.item;
+                        categoryCell.textContent = data.category_name;
+                        categoryCell.dataset.categoryId = data.category_id;
+                        taxRateCell.textContent  = data.tax_rate;
+                        taxAmtCell.textContent   = `$${data.tax_amount}`;
+                        totalCell.textContent    = `$${(parseFloat(data.amount) + parseFloat(data.tax_amount)).toFixed(2)}`;
+                        actionCell.innerHTML = `
+                            <button class="action-btn edit-btn" style="padding:4px 10px; font-size:12px;">Edit</button>
+                            <button class="action-btn delete-btn" style="padding:4px 10px; font-size:12px; background:#dc3545;">Delete</button>
+                        `;
+                        row.classList.remove("editing");
+                        attachEditListeners();
+                        attachDeleteListeners();
+                    } else {
+                        const tr = document.createElement("tr");
+                        tr.className = "inline-error";
+                        tr.innerHTML = `<td colspan="8" style="color:#dc3545; font-size:13px; padding:4px 10px;">${data.error}</td>`;
+                        row.after(tr);
+                    }
+                });
+            };
+        };
     });
 }
+
+function attachDeleteListeners() {
+    document.querySelectorAll(".delete-btn").forEach(btn => {
+        btn.onclick = function () {
+            const row = this.closest("tr");
+            if (row.classList.contains("editing")) return;
+
+            const expenseId  = row.dataset.id;
+            const actionCell = row.querySelector(".action-cell");
+
+            actionCell.innerHTML = `
+                <span style="font-size:13px; color:#dc3545; margin-right:8px;">Sure?</span>
+                <button class="action-btn confirm-delete-btn" style="padding:4px 10px; font-size:12px; background:#dc3545;">Yes</button>
+                <button class="action-btn cancel-delete-btn" style="padding:4px 10px; font-size:12px; background:#6c757d;">No</button>
+            `;
+
+            // NO
+            actionCell.querySelector(".cancel-delete-btn").onclick = function () {
+                actionCell.innerHTML = `
+                    <button class="action-btn edit-btn" style="padding:4px 10px; font-size:12px;">Edit</button>
+                    <button class="action-btn delete-btn" style="padding:4px 10px; font-size:12px; background:#dc3545;">Delete</button>
+                `;
+                attachEditListeners();
+                attachDeleteListeners();
+            };
+
+            // YES
+            actionCell.querySelector(".confirm-delete-btn").onclick = function () {
+                fetch(`/expenses/${expenseId}/delete/`, {
+                    method: "POST",
+                    headers: { "X-CSRFToken": CSRF }
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        row.remove();
+                    } else {
+                        alert("Delete failed: " + data.error);
+                    }
+                });
+            };
+        };
+    });
+}
+
+attachEditListeners();
+attachDeleteListeners();
 </script>
 
 </body>

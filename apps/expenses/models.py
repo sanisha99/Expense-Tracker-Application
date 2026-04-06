@@ -7,6 +7,7 @@ class Category(models.Model):
     name = models.CharField(max_length=100)
     subcategory = models.CharField(max_length=100, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(User,on_delete=models.SET_NULL,null=True)
 
     def __str__(self):
         if self.subcategory:
@@ -36,14 +37,6 @@ class Expense(models.Model):
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
-
-    modified_by = models.ForeignKey(
-        User,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="expenses_modified"
-    )
 
     modified_at = models.DateTimeField(auto_now=True)
 

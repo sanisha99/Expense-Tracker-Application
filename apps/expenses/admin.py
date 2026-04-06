@@ -1,73 +1,80 @@
 from django.contrib import admin
-from import_export.admin import ImportExportModelAdmin
-from .models import Expense, Category, Budget, Receipt
-from .resources import ExpenseResource
+from django.contrib.auth.admin import UserAdmin
+from django.contrib.auth.models import User
+from apps.expenses.models import Expense, Category, Budget, Receipt
 
 
-class ExpenseAdmin(ImportExportModelAdmin):
+def send_invite(user, request):
+    from apps.expenses.views.invite_user_view import send_invite_email
+    send_invite_email(user, request)
 
-    resource_class = ExpenseResource
 
-    list_display = (
-        'date',
-        'item',
-        'category',
-        'tax_rate',
-        'tax_amount',
-        'amount',
-        'created_by',
-        'created_at'
-    )
+class CustomUserAdmin(UserAdmin):
 
-    search_fields = ('item', 'category__name')
-
-    list_filter = ('category', 'date')
-
-    # Auto-fill created_by and modified_by
     def save_model(self, request, obj, form, change):
+        # Capture old email BEFORE saving
+        old_email = None
+        if change and obj.pk:
+            try:
+                old_email = User.objects.get(pk=obj.pk).email
+            except User.DoesNotExist:
+                pass
 
-        if not obj.created_by:
-            obj.created_by = request.user
-
-        obj.modified_by = request.user
-
+        is_new = obj.pk is None
         super().save_model(request, obj, form, change)
 
+        new_email = obj.email
 
-class CategoryAdmin(ImportExportModelAdmin):
+        # Send invite if:
+        # 1. Brand new user with email already filled
+        # 2. Existing user who just got an email added for the first time
+        
+        should_send = (
+            (is_new and new_email) or
+            (change and new_email and not old_email)
+        )
 
-    list_display = ('name', 'subcategory', 'created_at')
+        if should_send:
+            try:
+                send_invite(obj, request)
+                self.message_user(
+                    request,
+                    f"✅ Invite email sent to {new_email}"
+                )
+                print(f"INVITE EMAIL SENT TO: {new_email}")
+            except Exception as e:
+                self.message_user(
+                    request,
+                    f"❌ User created but email failed: {str(e)}"
+                )
+                print(f"INVITE EMAIL ERROR: {str(e)}")
 
-    search_fields = ('name', 'subcategory')
+# Unregister default User and register with CustomUserAdmin
+try:
+    admin.site.unregister(User)
+except admin.sites.NotRegistered:
+    pass
 
-
-# NEW ADMIN CLASSES
-
-class BudgetAdmin(ImportExportModelAdmin):
-
-    list_display = (
-        'month',
-        'total_income',
-        'budget_limit',
-        'created_by',
-        'created_at'
-    )
-
-
-class ReceiptAdmin(ImportExportModelAdmin):
-
-    list_display = (
-        'item',
-        'total_amount',
-        'tax_amount',
-        'uploaded_by',
-        'created_at'
-    )
+admin.site.register(User, CustomUserAdmin)
 
 
-# REGISTER MODELS
+# Register your models
+@admin.register(Expense)
+class ExpenseAdmin(admin.ModelAdmin):
+    list_display = ["item", "amount", "category", "date", "created_by"]
+    list_filter = ["category", "date"]
 
-admin.site.register(Expense, ExpenseAdmin)
-admin.site.register(Category, CategoryAdmin)
-admin.site.register(Budget, BudgetAdmin)
-admin.site.register(Receipt, ReceiptAdmin)
+
+@admin.register(Category)
+class CategoryAdmin(admin.ModelAdmin):
+    list_display = ["name", "subcategory", "created_by"]
+
+
+@admin.register(Budget)
+class BudgetAdmin(admin.ModelAdmin):
+    list_display = ["month", "total_income", "budget_limit", "created_by"]
+
+
+@admin.register(Receipt)
+class ReceiptAdmin(admin.ModelAdmin):
+    list_display = ["item", "total_amount", "created_at"]

@@ -5,9 +5,6 @@
 
 <title>Expense Tracker Dashboard</title>
 
-<!-- Bootstrap CSS -->
-<link rel="stylesheet"
-href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
 
 <!-- Flatpickr Calendar CSS -->
 <link rel="stylesheet"
@@ -28,18 +25,39 @@ href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <img src="{% static 'images/user.png' %}" class="profile-img">
 
     <div class="profile-name">
-        {{ request.user.username }}
-    </div>
+            {% if request.user.is_authenticated %}
+                {{ request.user.username }}
+            {% else %}
+                Guest
+            {% endif %}
+        </div>
+
+        <!-- LOGIN / LOGOUT BUTTON -->
+        <div style="margin-top:10px; text-align:center;">
+
+            {% if request.user.is_authenticated %}
+                <form method="post" action="{% url 'logout' %}" style="margin-top:10px;">
+                    {% csrf_token %}
+                    <button type="submit" class="action-btn" style="width:100%;">
+                        Logout
+                    </button>
+                </form>
+            {% else %}
+                <a href="{% url 'login' %}" class="action-btn" style="display:block;">
+                    Login
+                </a>
+            {% endif %}
+
+        </div>
 
 </div>
 
-<a href="/admin">Admin</a>
-<a href="/" class="active">Expense Tracker Dashboard</a>
-<a href="/expenses/">Expenses</a>
-<a href="/categories/">Categories</a>
-<a href="/budgets/">Budgets</a>
-<a href="/receipts/">Receipts</a>
-<a href="/chatbot/">Chatbot</a>
+<a href="{% url 'dashboard' %}" class="active">Tracker Dashboard</a>
+<a href="{% url 'expenses_list' %}">Expenses</a>
+<a href="{% url 'categories_list' %}">Categories</a>
+<a href="{% url 'budgets_list' %}">Budgets</a>
+<a href="{% url 'receipts_list' %}">Receipts</a>
+<a href="{% url 'chatbot' %}">AI Assistant</a>
 
 </div>
 
@@ -109,9 +127,7 @@ href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <div class="card-value">${{ total_spending }}</div>
 <div class="card-title">Total Spending</div>
 </div>
-
 </div>
-
 
 <!-- Charts Section -->
 {% include "charts.html" %}
@@ -123,18 +139,27 @@ href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 
 <script>
 
-flatpickr("#dateRange",{
-mode:"range",
-dateFormat:"Y-m-d",
+flatpickr("#dateRange", {
+    mode: "range",
+    dateFormat: "Y-m-d",
+    
+    defaultDate: "{{ selected_dates }}".includes(" to ") 
+        ? "{{ selected_dates }}".split(" to ") 
+        : null,
 
-onClose:function(selectedDates,dateStr){
-
-if(dateStr){
-window.location.href="?dates="+dateStr;
-}
-
-}
-
+    onClose: function(selectedDates, dateStr) {
+        if (selectedDates.length === 2) {
+            window.location.href = "?dates=" + dateStr;
+        }
+    },
+    
+    
+    onOpen: function() {
+        if ("{{ selected_dates }}") {
+            // User clicked input while filter is active → clear it
+            window.location.href = "/";
+        }
+    }
 });
 
 </script>

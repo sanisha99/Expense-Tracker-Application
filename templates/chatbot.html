@@ -6,19 +6,40 @@
     <div class="sidebar-profile">
         <img src="{% static 'images/user.png' %}" class="profile-img">
         <div class="profile-name">
-            {{ request.user.username }}
+            {% if request.user.is_authenticated %}
+                {{ request.user.username }}
+            {% else %}
+                Guest
+            {% endif %}
+        </div>
+
+        <!-- LOGIN / LOGOUT BUTTON -->
+        <div style="margin-top:10px; text-align:center;">
+
+            {% if request.user.is_authenticated %}
+                <form method="post" action="{% url 'logout' %}" style="margin-top:10px;">
+                    {% csrf_token %}
+                    <button type="submit" class="action-btn" style="width:100%;">
+                        Logout
+                    </button>
+                </form>
+            {% else %}
+                <a href="{% url 'login' %}" class="action-btn" style="display:block;">
+                    Login
+                </a>
+            {% endif %}
+
         </div>
     </div>
 
     <h5>Expense Tracker</h5>
 
-    <a href="/admin/">Admin</a>
-    <a href="/">Expense Tracker Dashboard</a>
-    <a href="/expenses/">Expenses</a>
-    <a href="/categories/">Categories</a>
-    <a href="/budgets/">Budgets</a>
-    <a href="/receipts/">Receipts</a>
-    <a href="/chatbot/" class="active">Chatbot</a>
+     <a href="{% url 'dashboard' %}" >Tracker Dashboard</a>
+        <a href="{% url 'expenses_list' %}" >Expenses</a>
+        <a href="{% url 'categories_list' %}">Categories</a>
+        <a href="{% url 'budgets_list' %}">Budgets</a>
+        <a href="{% url 'receipts_list' %}" >Receipts</a>
+        <a href="{% url 'chatbot' %}" class="active" >AI Assistant</a>
 </div>
 
 <!-- MAIN CONTENT -->

@@ -1,93 +1,12 @@
 
-# import google.generativeai as genai
-
-# from django.shortcuts import render
-
-# from django.conf import settings
-# from django.http import JsonResponse
-# from django.db.models import Sum 
-# from .models import Expense,Budget
-# from datetime import date
-
-# import re
-# import json
-
-# # Configure Gemini
-# genai.configure(api_key=settings.GOOGLE_API_KEY)
-# model = genai.GenerativeModel("models/gemini-2.5-flash")
-
-
-# def chatbot_view(request):
-#     query = request.GET.get("q")
-
-#     # UI load
-#     if not query:
-#         return render(request, "chatbot.html")
-
-#     try:
-#         expenses = Expense.objects.select_related("category").all()
-
-#         documents = []
-#         for exp in expenses:
-#             doc = (
-#                 f"Date: {exp.date}, "
-#                 f"Category: {exp.category.name}, "
-#                 f"Item: {exp.item}, "
-#                 f"Amount: {exp.amount}, "
-#                 f"Tax: {exp.tax_amount}"
-#             )
-#             documents.append(doc)
-
-#         if not documents:
-#             return JsonResponse({"answer": "No expense data available."})
-
-#         context = "\n".join(documents[:100])
-
-#         prompt = f"""
-# You are a financial assistant.
-
-# Use ONLY the data below:
-
-# {context}
-
-# Question: {query}
-
-# Answer clearly with numbers.
-# """
-
-#         response = model.generate_content(prompt)
-
-#         return JsonResponse({"answer": response.text})
-
-#     except Exception as e:
-#         return JsonResponse({"answer": f"Error: {str(e)}"})
-    
-
-
-
-# import google.generativeai as genai
-# import json
-
-# from datetime import date
-
-# from django.shortcuts import render
-# from django.conf import settings
-# from django.http import JsonResponse
-# from django.db.models import Sum
-
-# from .models import Expense, Budget
-
-
-# # Configure Gemini
-# genai.configure(api_key=settings.GOOGLE_API_KEY)
-# model = genai.GenerativeModel("models/gemini-2.5-flash")
-
-
 from apps.expenses.services.flow_service import init_flow, handle_flow
 from apps.expenses.services.chatbot_service import handle_query
+from apps.expenses.services.chatbot_service import parse_intent, format_response
 from django.http import JsonResponse
 from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
 
+@login_required
 def chatbot_view(request):
 
     if not request.GET.get("q"):
@@ -122,20 +41,49 @@ def chatbot_view(request):
 
             return JsonResponse({"answer": response})
 
-        # NORMAL QUERY
-        result = handle_query(query, last_context)
+        # -------------------------
+        # AI INTENT
+        # -------------------------
+        intent_data = parse_intent(query)
 
+        intent = intent_data.get("intent")
+        entities = intent_data.get("entities", {})
+
+        # -------------------------
+        # ADD EXPENSE (AI FIRST)
+        # -------------------------
+        if intent == "add_expense":
+            if not entities.get("item") or not entities.get("amount") or not entities.get("category"):
+                flow = init_flow()
+                request.session["flow"] = flow
+
+                return JsonResponse({
+                    "answer": "Let’s add this step by step. What is the item?"
+                })
+
+     
+        result = handle_query(intent, entities, last_context, user=request.user)
+        print("FINAL RESULT:", result)
+        # -------------------------
+        # FORMAT RESPONSE (AI)
+        # -------------------------
         if isinstance(result, dict):
-            response = result["response"]
-            request.session["last_context"] = result["context"]
+            request.session["last_context"] = result.get("context")
+            
+            response = format_response(result)
+
         else:
             response = result
 
         chat_history.append({"role": "assistant", "message": response})
         request.session["chat_history"] = chat_history
-
+    
         return JsonResponse({"answer": response})
 
     except Exception as e:
-        print("ERROR:", str(e))
-        return JsonResponse({"answer": "Something went wrong"})
+        import traceback
+        traceback.print_exc()   
+
+        return JsonResponse({
+            "answer": f"Error: {str(e)}"
+        })

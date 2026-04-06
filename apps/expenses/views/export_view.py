@@ -1,6 +1,7 @@
 from apps.expenses.resources import ExpenseResource, ReceiptResource, CategoryResource, BudgetResource
 from django.http import HttpResponse
 
+
 def export_data(request, model_name):
 
     if model_name == "expenses":

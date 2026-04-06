@@ -21,18 +21,38 @@
         <img src="{% static 'images/user.png' %}" class="profile-img">
 
         <div class="profile-name">
-            {{ request.user.username }}
+            {% if request.user.is_authenticated %}
+                {{ request.user.username }}
+            {% else %}
+                Guest
+            {% endif %}
         </div>
 
-    </div>
+        <!-- LOGIN / LOGOUT BUTTON -->
+        <div style="margin-top:10px; text-align:center;">
 
-    <a href="/admin/">Admin Panel</a>
-    <a href="/">Expense Tracker Dashboard</a>
-    <a href="/expenses/">Expenses</a>
-    <a href="/categories/">Categories</a>
-    <a href="/budgets/">Budgets</a>
-    <a href="/receipts/">Receipts</a>
-    <a href="/chatbot/">Chatbot</a>
+            {% if request.user.is_authenticated %}
+                <form method="post" action="{% url 'logout' %}" style="margin-top:10px;">
+                    {% csrf_token %}
+                    <button type="submit" class="action-btn" style="width:100%;">
+                        Logout
+                    </button>
+                </form>
+            {% else %}
+                <a href="{% url 'login' %}" class="action-btn" style="display:block;">
+                    Login
+                </a>
+            {% endif %}
+
+        </div>
+
+        </div>
+    <a href="{% url 'dashboard' %}" >Tracker Dashboard</a>
+    <a href="{% url 'expenses_list' %}">Expenses</a>
+    <a href="{% url 'categories_list' %}">Categories</a>
+    <a href="{% url 'budgets_list' %}" class="active">Budgets</a>
+    <a href="{% url 'receipts_list' %}">Receipts</a>
+    <a href="{% url 'chatbot' %}">AI Assistant</a>
 
 </div>
 
@@ -73,12 +93,21 @@
     </button>
 
 </form>
+    
+{% if error %}
+    <div style="color: red; margin-top: 10px; font-weight: bold;">
+        {{ error }}
+    </div>
+{% endif %}
+     
+     <div style="display:flex; gap:10px;">
+        <a href="/budgets/add/" class="action-btn">+ Add Budget</a>
 
     <!-- RIGHT: EXPORT -->
     <a href="{% url 'export_data' 'budgets' %}" class="action-btn">
         Export
     </a>
-
+   
 </div>
 
 
@@ -104,49 +133,59 @@
     <th class="drag-col" draggable="true">Budget Limit</th>
     <th class="drag-col" draggable="true">Created By</th>
     <th class="drag-col" draggable="true">Created At</th>
+    <th>Actions</th>
 </tr>
 </thead>
 
 <tbody>
 
-{% for budget in budgets %}
-<tr>
-    <td>{{ forloop.counter }}</td>
-    <td>{{ budget.month }}</td>
-    <td>${{ budget.total_income }}</td>
-    <td>${{ budget.budget_limit }}</td>
-    <td>{{ budget.created_by }}</td>
-    <td>{{ budget.created_at }}</td>
-</tr>
-{% endfor %}
+    {% for budget in budgets %}
+    <tr data-id="{{ budget.id }}">
+        <td>{{ forloop.counter }}</td>
+        <td class="cell-month">{{ budget.month }}</td>
+        <td class="cell-income">{{ budget.total_income }}</td>
+        <td class="cell-limit">{{ budget.budget_limit }}</td>
+        <td>{{ budget.created_by }}</td>
+        <td>{{ budget.created_at }}</td>
+        <td class="action-cell">
+            <button class="action-btn edit-btn"
+                    style="padding:4px 10px; font-size:12px;">
+                Edit
+            </button>
+            <button class="action-btn delete-btn"
+                    style="padding:4px 10px; font-size:12px; background:#dc3545;">
+                Delete
+            </button>
+        </td>
+    </tr>
+    {% endfor %}
 
 </tbody>
 
 </table>
+<div style="margin-top:20px; text-align:center; width:100%; display:flex; justify-content:center; align-items:center; gap:10px;">
 
-<div style="margin-top:20px;text-align:center;">
+    {% if budgets.has_previous %}
+        <a href="?page={{ budgets.previous_page_number }}
+        {% if request.GET.start_month %}&start_month={{ request.GET.start_month }}{% endif %}
+        {% if request.GET.end_month %}&end_month={{ request.GET.end_month }}{% endif %}"
+        class="action-btn">
+            Previous
+        </a>
+    {% endif %}
 
-{% if budgets.has_previous %}
-    <a href="?page={{ budgets.previous_page_number }}
-    {% if request.GET.start_month %}&start_month={{ request.GET.start_month }}{% endif %}
-    {% if request.GET.end_month %}&end_month={{ request.GET.end_month }}{% endif %}"
-    class="action-btn">
-    Previous
-</a>
-{% endif %}
+    <span style="font-weight:bold;">
+        Page {{ budgets.number }} of {{ budgets.paginator.num_pages }}
+    </span>
 
-<span style="margin:0 10px;font-weight:bold;">
-    Page {{ budgets.number }} of {{ budgets.paginator.num_pages }}
-</span>
-
-{% if budgets.has_next %}
-    <a href="?page={{ budgets.next_page_number }}
-    {% if request.GET.start_month %}&start_month={{ request.GET.start_month }}{% endif %}
-    {% if request.GET.end_month %}&end_month={{ request.GET.end_month }}{% endif %}"
-    class="action-btn">
-    Next
-</a>
-{% endif %}
+    {% if budgets.has_next %}
+        <a href="?page={{ budgets.next_page_number }}
+        {% if request.GET.start_month %}&start_month={{ request.GET.start_month }}{% endif %}
+        {% if request.GET.end_month %}&end_month={{ request.GET.end_month }}{% endif %}"
+        class="action-btn">
+            Next
+        </a>
+    {% endif %}
 
 </div>
 
@@ -158,99 +197,225 @@
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
 <script>
-document.addEventListener("DOMContentLoaded", function(){
-
-const headerRow = document.getElementById("column-header");
-
-const savedOrder = JSON.parse(localStorage.getItem("budgets-columnOrder"));
-
-if (savedOrder) {
-    const table = headerRow.closest("table");
-    const rows = table.querySelectorAll("tr");
-
-    rows.forEach(row => {
-        const cells = Array.from(row.children);
-        const newCells = [];
-
-        savedOrder.forEach(index => {
-            if (cells[index] !== undefined) {
-                newCells.push(cells[index]);
-            }
-        });
-
-        row.innerHTML = "";
-        newCells.forEach(c => row.appendChild(c));
-    });
-}
-
-new Sortable(headerRow,{
-    animation:150,
-    draggable:"th:not(:first-child)",
-
-    onEnd: function () {
-
-        const order = [];
-
-        headerRow.querySelectorAll("th").forEach((th, index) => {
-            order.push(index);
-        });
-
-        localStorage.setItem("budgets-columnOrder", JSON.stringify(order));
-    }
-});
-});
+    const CURRENT_USER = "{{ request.user.username }}";
 </script>
 
-<!-- COLUMN TOGGLE -->
 <script>
-document.querySelectorAll(".column-toggle").forEach(toggle => {
+document.addEventListener("DOMContentLoaded", function () {
 
-    toggle.addEventListener("change", function(){
+    const STORAGE_KEY = `budgets-hiddenColumns-${CURRENT_USER}`;
+    const toggles = document.querySelectorAll(".column-toggle");
 
-        const hiddenColumns = [];
+    // --- Restore saved state ---
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
 
-        document.querySelectorAll(".column-toggle").forEach(cb => {
-            if (!cb.checked){
-                hiddenColumns.push(cb.dataset.column);
-            }
-        });
-
-        localStorage.setItem("budgets-hiddenColumns", JSON.stringify(hiddenColumns));
-
-        const column = this.dataset.column;
-        const visible = this.checked;
-
-        document.querySelectorAll("table tr").forEach(row => {
-            const cell = row.children[column];
-            if(cell){
-                cell.style.display = visible ? "" : "none";
-            }
-        });
-
-    });
-
-});
-
-const hidden = JSON.parse(localStorage.getItem("budgets-hiddenColumns"));
-
-if (hidden){
-    hidden.forEach(col => {
-
-        document.querySelectorAll("table tr").forEach(row => {
-            const cell = row.children[col];
-            if(cell){
-                cell.style.display = "none";
-            }
-        });
-
-        const checkbox = document.querySelector(`.column-toggle[data-column="${col}"]`);
-        if(checkbox){
-            checkbox.checked = false;
+    toggles.forEach(cb => {
+        const col = cb.dataset.column;
+        if (saved.includes(col)) {
+            cb.checked = false;
+            document.querySelectorAll("table tr").forEach(row => {
+                const cell = row.children[col];
+                if (cell) cell.style.display = "none";
+            });
+        } else {
+            cb.checked = true;
+            document.querySelectorAll("table tr").forEach(row => {
+                const cell = row.children[col];
+                if (cell) cell.style.display = "";
+            });
         }
     });
-}
+
+    // --- Save on change ---
+    toggles.forEach(cb => {
+        cb.addEventListener("change", function () {
+            const col = this.dataset.column;
+            const visible = this.checked;
+
+            document.querySelectorAll("table tr").forEach(row => {
+                const cell = row.children[col];
+                if (cell) cell.style.display = visible ? "" : "none";
+            });
+
+            const hidden = [];
+            toggles.forEach(c => {
+                if (!c.checked) hidden.push(c.dataset.column);
+            });
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(hidden));
+        });
+    });
+
+});
 </script>
 
+<script>
+const CSRF = "{{ csrf_token }}";
+
+document.querySelectorAll(".edit-btn").forEach(btn => {
+    btn.addEventListener("click", function () {
+        const row = this.closest("tr");
+
+        // If already in edit mode, ignore
+        if (row.classList.contains("editing")) return;
+        row.classList.add("editing");
+
+        const budgetId = row.dataset.id;
+        const monthCell  = row.querySelector(".cell-month");
+        const incomeCell = row.querySelector(".cell-income");
+        const limitCell  = row.querySelector(".cell-limit");
+        const actionCell = row.querySelector(".action-cell");
+
+        // Store originals for cancel
+        const origMonth  = monthCell.textContent.trim();
+        const origIncome = incomeCell.textContent.trim();
+        const origLimit  = limitCell.textContent.trim();
+
+        // Convert YYYY-MM-DD → YYYY-MM for month input
+        const monthInput = origMonth.slice(0, 7);
+
+        // Replace cells with inputs
+        monthCell.innerHTML  = `<input type="month" value="${monthInput}" style="padding:4px 6px; border-radius:4px; border:1px solid #ccc; font-size:13px;">`;
+        incomeCell.innerHTML = `<input type="number" step="0.01" value="${origIncome}" style="padding:4px 6px; border-radius:4px; border:1px solid #ccc; font-size:13px; width:90px;">`;
+        limitCell.innerHTML  = `<input type="number" step="0.01" value="${origLimit}" style="padding:4px 6px; border-radius:4px; border:1px solid #ccc; font-size:13px; width:90px;">`;
+
+        // Replace action buttons with Save / Cancel
+        actionCell.innerHTML = `
+            <button class="action-btn save-btn" style="padding:4px 10px; font-size:12px; background:#28a745;">Save</button>
+            <button class="action-btn cancel-btn" style="padding:4px 10px; font-size:12px; background:#6c757d;">Cancel</button>
+        `;
+
+        // CANCEL
+        actionCell.querySelector(".cancel-btn").addEventListener("click", function () {
+            monthCell.textContent  = origMonth;
+            incomeCell.textContent = origIncome;
+            limitCell.textContent  = origLimit;
+            actionCell.innerHTML = `
+                <button class="action-btn edit-btn" style="padding:4px 10px; font-size:12px;">Edit</button>
+                <button class="action-btn delete-btn" style="padding:4px 10px; font-size:12px; background:#dc3545;">Delete</button>
+            `;
+            row.classList.remove("editing");
+            attachDeleteListeners();
+            attachEditListeners();
+        });
+
+        // SAVE
+        actionCell.querySelector(".save-btn").addEventListener("click", function () {
+            const newMonth  = monthCell.querySelector("input").value;
+            const newIncome = incomeCell.querySelector("input").value;
+            const newLimit  = limitCell.querySelector("input").value;
+
+            const errorDiv = row.querySelector(".inline-error");
+            if (errorDiv) errorDiv.remove();
+
+            fetch(`/budgets/${budgetId}/edit/`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": CSRF
+                },
+                body: JSON.stringify({
+                    month: newMonth,
+                    total_income: newIncome,
+                    budget_limit: newLimit
+                })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    monthCell.textContent  = data.month;
+                    incomeCell.textContent = newIncome;
+                    limitCell.textContent  = newLimit;
+                    actionCell.innerHTML = `
+                        <button class="action-btn edit-btn" style="padding:4px 10px; font-size:12px;">Edit</button>
+                        <button class="action-btn delete-btn" style="padding:4px 10px; font-size:12px; background:#dc3545;">Delete</button>
+                    `;
+                    row.classList.remove("editing");
+                    attachDeleteListeners();
+                    attachEditListeners();
+                } else {
+                    // Show error inline below the row
+                    const tr = document.createElement("tr");
+                    tr.className = "inline-error";
+                    tr.innerHTML = `<td colspan="7" style="color:#dc3545; font-size:13px; padding:4px 10px;">${data.error}</td>`;
+                    row.after(tr);
+                }
+            });
+        });
+    });
+});
+
+function attachEditListeners() {
+    document.querySelectorAll(".edit-btn").forEach(btn => {
+        btn.addEventListener("click", arguments.callee);
+    });
+}
+
+function attachDeleteListeners() {
+    document.querySelectorAll(".delete-btn").forEach(btn => {
+        btn.addEventListener("click", function () {
+            const row = this.closest("tr");
+            if (row.classList.contains("editing")) return;
+
+            const budgetId = row.dataset.id;
+            const actionCell = row.querySelector(".action-cell");
+
+            // Show inline confirmation
+            actionCell.innerHTML = `
+                <span style="font-size:13px; color:#dc3545; margin-right:8px;">Sure?</span>
+                <button class="action-btn confirm-delete-btn" style="padding:4px 10px; font-size:12px; background:#dc3545;">Yes</button>
+                <button class="action-btn cancel-delete-btn" style="padding:4px 10px; font-size:12px; background:#6c757d;">No</button>
+            `;
+
+            // NO — restore buttons
+            actionCell.querySelector(".cancel-delete-btn").addEventListener("click", function () {
+                actionCell.innerHTML = `
+                    <button class="action-btn edit-btn" style="padding:4px 10px; font-size:12px;">Edit</button>
+                    <button class="action-btn delete-btn" style="padding:4px 10px; font-size:12px; background:#dc3545;">Delete</button>
+                `;
+                attachDeleteListeners();
+                attachEditListeners();
+            });
+
+            // YES — delete
+            actionCell.querySelector(".confirm-delete-btn").addEventListener("click", function () {
+                fetch(`/budgets/${budgetId}/delete/`, {
+                    method: "POST",
+                    headers: { "X-CSRFToken": CSRF }
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        row.remove();
+                    } else {
+                        alert("Delete failed: " + data.error);
+                    }
+                });
+            });
+        });
+    });
+}
+
+// Initialize delete listeners on page load
+attachDeleteListeners();
+</script>
+
+<script>
+// Set default month filter values if not already set by user
+document.addEventListener("DOMContentLoaded", function () {
+    const startInput = document.querySelector("input[name='start_month']");
+    const endInput   = document.querySelector("input[name='end_month']");
+
+    const currentYear = new Date().getFullYear();
+
+    // Only set defaults if URL has no existing filter params
+    if (!startInput.value) {
+        startInput.value = `${currentYear}-01`;  // Jan of current year
+    }
+    if (!endInput.value) {
+        endInput.value = `${currentYear}-12`;    // Dec of current year
+    }
+});
+</script>
 
 </body>
 

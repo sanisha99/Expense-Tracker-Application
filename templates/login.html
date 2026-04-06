@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Login</title>
+    {% include "styles.html" %}
+</head>
+
+<body>
+
+<div style="display:flex; justify-content:center; align-items:center; height:100vh;">
+
+    <div style="width:420px; background:white; border-radius:12px; box-shadow:0 4px 15px rgba(0,0,0,0.1); overflow:hidden;">
+
+        <!-- HEADER -->
+        <div style="background:#1f2d3d; padding:25px;">
+            <h2 style="color:#69b3d0; margin:0; font-size:26px; font-weight:bold;">
+                Expense Tracker
+            </h2>
+        </div>
+
+        <!-- FORM -->
+        <div style="padding:30px;">
+
+            <form method="POST">
+                {% csrf_token %}
+
+                  <!-- Error Message  -->
+                {% if form.errors %}
+                    <div style="
+                        background:#f2dede;
+                        color:#a94442;
+                        padding:10px;
+                        border-radius:6px;
+                        margin-bottom:15px;
+                        text-align:center;
+                    ">
+                        Invalid username or password
+                    </div>
+                {% endif %}
+                
+                <!-- USERNAME -->
+                <div style="margin-bottom:18px;">
+                    <label style="font-weight:600;">Username</label><br>
+                    <input type="text" name="username" required
+                           style="width:100%; padding:10px; border-radius:6px; border:1px solid #ddd;">
+                </div>
+
+                <!-- PASSWORD -->
+                <div style="margin-bottom:25px;">
+                    <label style="font-weight:600;">Password</label><br>
+                    <input type="password" name="password" required
+                           style="width:100%; padding:10px; border-radius:6px; border:1px solid #ddd;">
+                </div>
+
+                <!-- BUTTON -->
+                <div style="text-align:center;">
+                    <button type="submit" class="action-btn" style="width:120px;">
+                        Log in
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+</html>

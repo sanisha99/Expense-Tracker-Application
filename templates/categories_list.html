@@ -21,18 +21,38 @@
         <img src="{% static 'images/user.png' %}" class="profile-img">
 
         <div class="profile-name">
-            {{ request.user.username }}
+            {% if request.user.is_authenticated %}
+                {{ request.user.username }}
+            {% else %}
+                Guest
+            {% endif %}
+        </div>
+
+        <!-- LOGIN / LOGOUT BUTTON -->
+        <div style="margin-top:10px; text-align:center;">
+
+            {% if request.user.is_authenticated %}
+                <form method="post" action="{% url 'logout' %}" style="margin-top:10px;">
+                    {% csrf_token %}
+                    <button type="submit" class="action-btn" style="width:100%;">
+                        Logout
+                    </button>
+                </form>
+            {% else %}
+                <a href="{% url 'login' %}" class="action-btn" style="display:block;">
+                    Login
+                </a>
+            {% endif %}
+
         </div>
 
     </div>
-
-    <a href="/admin/">Admin Panel</a>
-    <a href="/">Expense Tracker Dashboard</a>
-    <a href="/expenses/">Expenses</a>
-    <a href="/categories/">Categories</a>
-    <a href="/budgets/">Budgets</a>
-    <a href="/receipts/">Receipts</a>
-    <a href="/chatbot/">Chatbot</a>
+    <a href="{% url 'dashboard' %}" >Tracker Dashboard</a>
+    <a href="{% url 'expenses_list' %}">Expenses</a>
+    <a href="{% url 'categories_list' %}" class='active'>Categories</a>
+    <a href="{% url 'budgets_list' %}">Budgets</a>
+    <a href="{% url 'receipts_list' %}">Receipts</a>
+    <a href="{% url 'chatbot' %}">AI Assistant</a>
 
 </div>
 
@@ -42,7 +62,6 @@
 <div class="main-content">
 
 <h1 class="dashboard-title">Categories</h1>
-
 
 <div class="table-card">
 
@@ -64,6 +83,13 @@
         </button>
 
     </form>
+ 
+    <div class="right-actions">
+        <!-- ADD button -->
+    <div style="margin-bottom:20px;">
+        <a href="/categories/add/" class="action-btn">+ Add Category</a>
+    </div>
+    </div>
 
 </div>
 
@@ -83,6 +109,7 @@
     <th class="drag-col" draggable="true">Name</th>
     <th class="drag-col" draggable="true">Subcategory</th>
     <th class="drag-col" draggable="true">Created At</th>
+    <th>Actions</th>
 </tr>
 
 </thead>
@@ -90,14 +117,22 @@
 <tbody>
 
 {% for category in categories %}
-
-<tr>
-<td>{{ forloop.counter }}</td>
-<td>{{ category.name }}</td>
-<td>{{ category.subcategory }}</td>
-<td>{{ category.created_at }}</td>
+<tr data-id="{{ category.id }}">
+    <td>{{ forloop.counter }}</td>
+    <td class="cell-name">{{ category.name }}</td>
+    <td class="cell-subcategory">{{ category.subcategory }}</td>
+    <td>{{ category.created_at }}</td>
+    <td class="action-cell">
+        <button class="action-btn edit-btn"
+                style="padding:4px 10px; font-size:12px;">
+            Edit
+        </button>
+        <button class="action-btn delete-btn"
+                style="padding:4px 10px; font-size:12px; background:#dc3545;">
+            Delete
+        </button>
+    </td>
 </tr>
-
 {% endfor %}
 
 </tbody>
@@ -129,86 +164,186 @@ Page {{ categories.number }} of {{ categories.paginator.num_pages }}
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
 <script>
-document.addEventListener("DOMContentLoaded", function(){
+document.addEventListener("DOMContentLoaded", function () {
 
-const headerRow = document.getElementById("column-header");
+    const STORAGE_KEY = "categories-hiddenColumns";
+    const toggles = document.querySelectorAll(".column-toggle");
 
-const savedOrder = JSON.parse(localStorage.getItem("columnOrder"));
+    // --- Restore saved hidden columns from previous session ---
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
 
-if (savedOrder) {
-    const table = headerRow.closest("table");
-    const rows = table.querySelectorAll("tr");
+    toggles.forEach(cb => {
+        const col = cb.dataset.column;
 
-    rows.forEach(row => {
-        const cells = Array.from(row.children);
-        const newCells = [];
-
-        savedOrder.forEach(index => {
-            if (cells[index] !== undefined) {
-                newCells.push(cells[index]);
-            }
-        });
-
-        row.innerHTML = "";
-        newCells.forEach(c => row.appendChild(c));
+        if (saved.includes(col)) {
+            // Hide the column
+            cb.checked = false;
+            document.querySelectorAll("table tr").forEach(row => {
+                const cell = row.children[col];
+                if (cell) cell.style.display = "none";
+            });
+        } else {
+            // Ensure visible (default state)
+            cb.checked = true;
+            document.querySelectorAll("table tr").forEach(row => {
+                const cell = row.children[col];
+                if (cell) cell.style.display = "";
+            });
+        }
     });
-}
 
-new Sortable(headerRow,{
-    animation:150,
-    draggable:"th:not(:first-child)",
-});
+    // --- Toggle on checkbox change and save to localStorage ---
+    toggles.forEach(cb => {
+        cb.addEventListener("change", function () {
+
+            const col = this.dataset.column;
+            const visible = this.checked;
+
+            document.querySelectorAll("table tr").forEach(row => {
+                const cell = row.children[col];
+                if (cell) cell.style.display = visible ? "" : "none";
+            });
+
+            // Save current hidden columns
+            const hidden = [];
+            toggles.forEach(c => {
+                if (!c.checked) hidden.push(c.dataset.column);
+            });
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(hidden));
+        });
+    });
+
 });
 </script>
 
-<!-- COLUMN TOGGLE -->
 <script>
-document.querySelectorAll(".column-toggle").forEach(toggle => {
+const CSRF = "{{ csrf_token }}";
 
-    toggle.addEventListener("change", function(){
+function attachEditListeners() {
+    document.querySelectorAll(".edit-btn").forEach(btn => {
+        btn.onclick = function () {
+            const row = this.closest("tr");
+            if (row.classList.contains("editing")) return;
+            row.classList.add("editing");
 
-        const hiddenColumns = [];
+            const categoryId  = row.dataset.id;
+            const nameCell    = row.querySelector(".cell-name");
+            const subCell     = row.querySelector(".cell-subcategory");
+            const actionCell  = row.querySelector(".action-cell");
 
-        document.querySelectorAll(".column-toggle").forEach(cb => {
-            if (!cb.checked){
-                hiddenColumns.push(cb.dataset.column);
-            }
-        });
+            const origName = nameCell.textContent.trim();
+            const origSub  = subCell.textContent.trim();
 
-        localStorage.setItem("categories-hiddenColumns", JSON.stringify(hiddenColumns));
+            nameCell.innerHTML = `<input type="text" value="${origName}"
+                style="padding:4px 6px; border-radius:4px; border:1px solid #ccc; font-size:13px; width:120px;">`;
+            subCell.innerHTML  = `<input type="text" value="${origSub}"
+                style="padding:4px 6px; border-radius:4px; border:1px solid #ccc; font-size:13px; width:120px;">`;
 
-        const column = this.dataset.column;
-        const visible = this.checked;
+            actionCell.innerHTML = `
+                <button class="action-btn save-btn" style="padding:4px 10px; font-size:12px; background:#28a745;">Save</button>
+                <button class="action-btn cancel-btn" style="padding:4px 10px; font-size:12px; background:#6c757d;">Cancel</button>
+            `;
 
-        document.querySelectorAll("table tr").forEach(row => {
-            const cell = row.children[column];
-            if(cell){
-                cell.style.display = visible ? "" : "none";
-            }
-        });
+            // CANCEL
+            actionCell.querySelector(".cancel-btn").onclick = function () {
+                nameCell.textContent = origName;
+                subCell.textContent  = origSub;
+                actionCell.innerHTML = `
+                    <button class="action-btn edit-btn" style="padding:4px 10px; font-size:12px;">Edit</button>
+                    <button class="action-btn delete-btn" style="padding:4px 10px; font-size:12px; background:#dc3545;">Delete</button>
+                `;
+                row.classList.remove("editing");
+                attachEditListeners();
+                attachDeleteListeners();
+            };
 
-    });
+            // SAVE
+            actionCell.querySelector(".save-btn").onclick = function () {
+                const newName = nameCell.querySelector("input").value.trim();
+                const newSub  = subCell.querySelector("input").value.trim();
 
-});
+                // Remove any previous inline error
+                const prev = row.nextElementSibling;
+                if (prev && prev.classList.contains("inline-error")) prev.remove();
 
-const hidden = JSON.parse(localStorage.getItem("hiddenColumns"));
-
-if (hidden){
-    hidden.forEach(col => {
-
-        document.querySelectorAll("table tr").forEach(row => {
-            const cell = row.children[col];
-            if(cell){
-                cell.style.display = "none";
-            }
-        });
-
-        const checkbox = document.querySelector(`.column-toggle[data-column="${col}"]`);
-        if(checkbox){
-            checkbox.checked = false;
-        }
+                fetch(`/categories/${categoryId}/edit/`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": CSRF
+                    },
+                    body: JSON.stringify({ name: newName, subcategory: newSub })
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        nameCell.textContent = data.name;
+                        subCell.textContent  = data.subcategory;
+                        actionCell.innerHTML = `
+                            <button class="action-btn edit-btn" style="padding:4px 10px; font-size:12px;">Edit</button>
+                            <button class="action-btn delete-btn" style="padding:4px 10px; font-size:12px; background:#dc3545;">Delete</button>
+                        `;
+                        row.classList.remove("editing");
+                        attachEditListeners();
+                        attachDeleteListeners();
+                    } else {
+                        const tr = document.createElement("tr");
+                        tr.className = "inline-error";
+                        tr.innerHTML = `<td colspan="5" style="color:#dc3545; font-size:13px; padding:4px 10px;">${data.error}</td>`;
+                        row.after(tr);
+                    }
+                });
+            };
+        };
     });
 }
+
+function attachDeleteListeners() {
+    document.querySelectorAll(".delete-btn").forEach(btn => {
+        btn.onclick = function () {
+            const row = this.closest("tr");
+            if (row.classList.contains("editing")) return;
+
+            const categoryId = row.dataset.id;
+            const actionCell = row.querySelector(".action-cell");
+
+            actionCell.innerHTML = `
+                <span style="font-size:13px; color:#dc3545; margin-right:8px;">Sure?</span>
+                <button class="action-btn confirm-delete-btn" style="padding:4px 10px; font-size:12px; background:#dc3545;">Yes</button>
+                <button class="action-btn cancel-delete-btn" style="padding:4px 10px; font-size:12px; background:#6c757d;">No</button>
+            `;
+
+            // NO
+            actionCell.querySelector(".cancel-delete-btn").onclick = function () {
+                actionCell.innerHTML = `
+                    <button class="action-btn edit-btn" style="padding:4px 10px; font-size:12px;">Edit</button>
+                    <button class="action-btn delete-btn" style="padding:4px 10px; font-size:12px; background:#dc3545;">Delete</button>
+                `;
+                attachEditListeners();
+                attachDeleteListeners();
+            };
+
+            // YES
+            actionCell.querySelector(".confirm-delete-btn").onclick = function () {
+                fetch(`/categories/${categoryId}/delete/`, {
+                    method: "POST",
+                    headers: { "X-CSRFToken": CSRF }
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        row.remove();
+                    } else {
+                        alert("Delete failed: " + data.error);
+                    }
+                });
+            };
+        };
+    });
+}
+
+attachEditListeners();
+attachDeleteListeners();
 </script>
 
 </body>

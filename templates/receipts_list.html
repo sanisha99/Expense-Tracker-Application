@@ -21,18 +21,38 @@
         <img src="{% static 'images/user.png' %}" class="profile-img">
 
         <div class="profile-name">
-            {{ request.user.username }}
+            {% if request.user.is_authenticated %}
+                {{ request.user.username }}
+            {% else %}
+                Guest
+            {% endif %}
+        </div>
+
+        <!-- LOGIN / LOGOUT BUTTON -->
+        <div style="margin-top:10px; text-align:center;">
+
+            {% if request.user.is_authenticated %}
+                <form method="post" action="{% url 'logout' %}" style="margin-top:10px;">
+                    {% csrf_token %}
+                    <button type="submit" class="action-btn" style="width:100%;">
+                        Logout
+                    </button>
+                </form>
+            {% else %}
+                <a href="{% url 'login' %}" class="action-btn" style="display:block;">
+                    Login
+                </a>
+            {% endif %}
+
         </div>
 
     </div>
-
-    <a href="/admin/">Admin Panel</a>
-    <a href="/">Expense Tracker Dashboard</a>
-    <a href="/expenses/">Expenses</a>
-    <a href="/categories/">Categories</a>
-    <a href="/budgets/">Budgets</a>
-    <a href="/receipts/">Receipts</a>
-    <a href="/chatbot/">Chatbot</a>
+        <a href="{% url 'dashboard' %}" >Tracker Dashboard</a>
+        <a href="{% url 'expenses_list' %}" >Expenses</a>
+        <a href="{% url 'categories_list' %}">Categories</a>
+        <a href="{% url 'budgets_list' %}">Budgets</a>
+        <a href="{% url 'receipts_list' %}" class="active">Receipts</a>
+        <a href="{% url 'chatbot' %}">AI Assistant</a>
 
 </div>
 
@@ -46,43 +66,62 @@
 
 <div class="table-card">
 
-<div class="table-actions">
+    <div class="table-actions">
 
-<div class="left-actions">
-     <!-- QR BUTTON -->
-    <a href="{% url 'qr_code' %}" class="action-btn">
-        Scan via QR
-    </a>
+    <!-- LEFT SIDE (like Expenses) -->
+    <div class="left-actions">
 
-    <!-- SEARCH BELOW QR -->
-    <form method="GET" style="display:flex; gap:8px;">
+        <!-- SEARCH -->
+        <form method="GET" class="search-form">
 
-        <input 
-            type="text" 
-            name="search"
-            placeholder="Search item..."
-            value="{{ request.GET.search }}"
-            style="padding:8px 12px; font-size:14px; min-width:180px;"
-        >
+            <input 
+                type="text" 
+                name="search"
+                placeholder="Search item..."
+                value="{{ request.GET.search }}"
+                class="search-input"
+            >
 
-        <button type="submit" class="action-btn">
-            Search
-        </button>
+            <button type="submit" class="action-btn">
+                Search
+            </button>
 
-    </form>
-</div>
+        </form>
 
-<div class="right-actions">
-    <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        <input type="file" name="receipt_image">
-        <button type="submit" class="action-btn">Scan Receipt</button>
-    </form>
+        <!-- QR BUTTON -->
+        <a href="{% url 'qr_code' %}" class="action-btn">
+            Scan via QR
+        </a>
 
-    <a href="{% url 'export_data' 'receipts' %}" class="action-btn">Export </a>
-</div>
+    </div>
 
-</div>
+
+    <!-- RIGHT SIDE -->
+    <div class="right-actions">
+
+        <!-- CLEAN FILE UPLOAD (NO "Choose file") -->
+        <form method="POST" enctype="multipart/form-data" class="file-import-group">
+            {% csrf_token %}
+
+            <label class="action-btn" style="margin:0;">
+                Import
+                <input type="file" name="receipt_image" hidden>
+            </label>
+
+            <button type="submit" class="action-btn">
+                Scan Receipt
+            </button>
+        </form>
+
+        <!-- EXPORT -->
+        <a href="{% url 'export_data' 'receipts' %}" class="action-btn">
+            Export
+        </a>
+
+    </div>
+
+    </div>
+
 
 <div style="margin-bottom:15px;">
 <label><input type="checkbox" class="column-toggle" data-column="1" checked> Item</label>
