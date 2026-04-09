@@ -7,9 +7,50 @@
 
 <body>
 
+ 
+<!-- SIDEBAR -->
+<div class="sidebar">
+
+    {% load static %}
+
+    <div class="sidebar-appname">💰 EXPENSE <span>TRACKER</span></div>
+
+    <div class="sidebar-profile">
+        <img src="{% static 'images/user.png' %}" class="profile-img">
+        <div class="profile-name">
+            {% if request.user.is_authenticated %}
+                {{ request.user.username }}
+            {% else %}
+                Guest
+            {% endif %}
+        </div>
+
+        <div style="margin-top:10px; text-align:center;">
+            {% if request.user.is_authenticated %}
+                <form method="post" action="{% url 'logout' %}" style="margin-top:10px;">
+                    {% csrf_token %}
+                    <button type="submit" class="action-btn" style="width:100%;">Logout</button>
+                </form>
+            {% else %}
+                <a href="{% url 'login' %}" class="action-btn" style="display:block;">Login</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <a href="{% url 'dashboard' %}">Tracker Dashboard</a>
+    <a href="{% url 'expenses_list' %}" >Expenses</a>
+    <a href="{% url 'categories_list' %}" >Categories</a>
+    <a href="{% url 'budgets_list' %}" class="active">Budgets</a>
+    <a href="{% url 'receipts_list' %}">Receipts</a>
+    <a href="{% url 'chatbot' %}">AI Assistant</a>
+
+</div>
+
+
+<!-- MAIN CONTENT -->   
 <div class="main-content">
 
-    <h1 class="dashboard-title">Add Budget</h1>
+    <h1 class="page-title">Add Budget</h1>
 
     <div class="table-card" style="max-width:600px;">
 
@@ -20,30 +61,33 @@
             </div>
         {% endif %}
 
-        <form method="POST">
+        <form method="POST" novalidate>
             {% csrf_token %}
 
             <!-- MONTH -->
             <div style="margin-bottom:15px;">
-                <label>Month</label><br>
-                <input type="month" name="month" required
-                       style="width:100%; padding:10px; border-radius:6px; border:1px solid #ddd;">
+                <label>Month <span class="required">*</span></label><br>
+                <input type="month" id="month" name="month"
+                    style="width:100%; padding:10px; border-radius:6px; border:1px solid #ddd;">
+                <small class="error-message" id="month-error"></small>
             </div>
 
             <!-- TOTAL INCOME -->
             <div style="margin-bottom:15px;">
-                <label>Total Income ($)</label><br>
-                <input type="number" step="0.01" name="total_income" required
-                       placeholder="e.g. 5000"
-                       style="width:100%; padding:10px; border-radius:6px; border:1px solid #ddd;">
+                <label>Total Income ($) <span class="required">*</span></label><br>
+                <input type="number" step="0.01" id="total_income" name="total_income"
+                    placeholder="e.g. 5000"
+                    style="width:100%; padding:10px; border-radius:6px; border:1px solid #ddd;">
+                <small class="error-message" id="income-error"></small>
             </div>
 
             <!-- BUDGET LIMIT -->
             <div style="margin-bottom:20px;">
-                <label>Budget Limit ($)</label><br>
-                <input type="number" step="0.01" name="budget_limit" required
-                       placeholder="e.g. 3000"
-                       style="width:100%; padding:10px; border-radius:6px; border:1px solid #ddd;">
+                <label>Budget Limit ($) <span class="required">*</span></label><br>
+                <input type="number" step="0.01" id="budget_limit" name="budget_limit"
+                    placeholder="e.g. 3000"
+                    style="width:100%; padding:10px; border-radius:6px; border:1px solid #ddd;">
+                <small class="error-message" id="budget-error"></small>
             </div>
 
             <!-- BUTTONS -->
@@ -61,6 +105,48 @@
     </div>
 
 </div>
+
+<script>
+// ✅ Set default month (current month)
+const monthInput = document.getElementById("month");
+const today = new Date();
+const year = today.getFullYear();
+const month = String(today.getMonth() + 1).padStart(2, '0');
+monthInput.value = `${year}-${month}`;
+
+// ✅ Validation
+document.querySelector("form").addEventListener("submit", function(e) {
+    let isValid = true;
+
+    const monthField = document.getElementById("month");
+    const income = document.getElementById("total_income");
+    const budget = document.getElementById("budget_limit");
+
+    // reset
+    document.querySelectorAll(".error-message").forEach(el => el.innerText = "");
+    document.querySelectorAll("input").forEach(el => el.classList.remove("input-error"));
+
+    if (!monthField.value) {
+        isValid = false;
+        monthField.classList.add("input-error");
+        document.getElementById("month-error").innerText = "Please select a month";
+    }
+
+    if (!income.value) {
+        isValid = false;
+        income.classList.add("input-error");
+        document.getElementById("income-error").innerText = "Total income is required";
+    }
+
+    if (!budget.value) {
+        isValid = false;
+        budget.classList.add("input-error");
+        document.getElementById("budget-error").innerText = "Budget limit is required";
+    }
+
+    if (!isValid) e.preventDefault();
+});
+</script>
 
 </body>
 </html>

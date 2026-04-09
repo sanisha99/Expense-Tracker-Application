@@ -20,22 +20,46 @@ import os
 from django.contrib.auth.decorators import login_required
 
 
+from django.http import JsonResponse
+from django.views.decorators.http import require_http_methods
+from django.shortcuts import get_object_or_404
+from django.db.models import Q
+
 def apply_receipt_search(queryset, request):
 
-    # FILTER BY USER (VERY IMPORTANT)
+    # FILTER BY USER
     if request.user.is_authenticated:
         queryset = queryset.filter(uploaded_by=request.user)
 
-    """
-    Search receipts by item
-    """
-    
     search = request.GET.get("search")
 
     if search:
-        queryset = queryset.filter(item__icontains=search.strip())
+        queryset = queryset.filter(
+            Q(item__icontains=search.strip()) |
+            Q(total_amount__icontains=search.strip()) |
+            Q(tax_amount__icontains=search.strip()) |
+            Q(created_at__icontains=search.strip())
+        )
 
     return queryset
+
+
+@login_required
+@require_http_methods(["POST"])
+def delete_receipt(request, receipt_id):
+    receipt = get_object_or_404(Receipt, id=receipt_id)
+    try:
+        receipt.delete()
+        return JsonResponse({"success": True})
+    except Exception as e:
+        return JsonResponse({"success": False, "error": str(e)})
+    
+
+@login_required
+def view_receipt(request, receipt_id):
+    receipt = get_object_or_404(Receipt, id=receipt_id)
+    return render(request, 'view_receipt.html', {'receipt': receipt})
+    
 
 @login_required
 def receipts_list(request):
@@ -248,6 +272,7 @@ def mobile_upload(request):
                 item="Scanned Receipt",
                 total_amount=total_amount,
                 tax_amount=tax_amount,
+                raw_text=text,
                 uploaded_by=request.user if request.user.is_authenticated else None
             )
 

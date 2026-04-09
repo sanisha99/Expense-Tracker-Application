@@ -16,6 +16,11 @@
 
     {% load static %}
 
+     <!-- APP NAME -->
+    <div class="sidebar-appname">
+    💰 EXPENSE <span>TRACKER</span>
+    </div>
+
     <div class="sidebar-profile">
 
         <img src="{% static 'images/user.png' %}" class="profile-img">
@@ -61,7 +66,7 @@
 
 <div class="main-content">
 
-<h1 class="dashboard-title">Receipts</h1>
+<h1 class="page-title">Receipts</h1>
 
 
 <div class="table-card">
@@ -77,7 +82,7 @@
             <input 
                 type="text" 
                 name="search"
-                placeholder="Search item..."
+                placeholder="Search ..."
                 value="{{ request.GET.search }}"
                 class="search-input"
             >
@@ -98,6 +103,13 @@
 
     <!-- RIGHT SIDE -->
     <div class="right-actions">
+
+         <!-- DELETE SELECTED BUTTON -->
+        <button id="deleteSelectedBtn"
+                class="action-btn"
+                style="background:#dc3545; display:none;">
+            Delete Selected
+        </button>
 
         <!-- CLEAN FILE UPLOAD (NO "Choose file") -->
         <form method="POST" enctype="multipart/form-data" class="file-import-group">
@@ -120,63 +132,80 @@
 
     </div>
 
+
+{% if receipts %}
+    <div style="margin-bottom:15px;">
+    <label><input type="checkbox" class="column-toggle" data-column="1" checked> Item</label>
+    <label><input type="checkbox" class="column-toggle" data-column="2" checked> Total Amount</label>
+    <label><input type="checkbox" class="column-toggle" data-column="3" checked> Tax Amount</label>
+    <label><input type="checkbox" class="column-toggle" data-column="4" checked> Uploaded By</label>
+    <label><input type="checkbox" class="column-toggle" data-column="5" checked> Created At</label>
     </div>
 
 
-<div style="margin-bottom:15px;">
-<label><input type="checkbox" class="column-toggle" data-column="1" checked> Item</label>
-<label><input type="checkbox" class="column-toggle" data-column="2" checked> Total Amount</label>
-<label><input type="checkbox" class="column-toggle" data-column="3" checked> Tax Amount</label>
-<label><input type="checkbox" class="column-toggle" data-column="4" checked> Uploaded By</label>
-<label><input type="checkbox" class="column-toggle" data-column="5" checked> Created At</label>
+    <table>
+
+    <thead class="table-header">
+    <tr id="column-header">
+        <th><input type="checkbox" id="selectAll"></th>
+        <th>#</th>
+        <th class="drag-col" draggable="true">Item</th>
+        <th class="drag-col" draggable="true">Total Amount</th>
+        <th class="drag-col" draggable="true">Tax Amount</th>
+        <th class="drag-col" draggable="true">Uploaded By</th>
+        <th class="drag-col" draggable="true">Created At</th>
+    </tr>
+    </thead>
+
+    <tbody>
+
+    {% for receipt in receipts %}
+    <tr data-id="{{ receipt.id }}">
+        <td><input type="checkbox" class="row-checkbox" data-id="{{ receipt.id }}"></td>
+        <td>{{ forloop.counter }}</td>
+        <td>{{ receipt.item }}</td>
+        <td>${{ receipt.total_amount }}</td>
+        <td>${{ receipt.tax_amount }}</td>
+        <td>{{ receipt.uploaded_by }}</td>
+        <td>{{ receipt.created_at }}</td>
+        <td class="action-cell">
+        <a href="{% url 'view_receipt' receipt.id %}" class="action-btn" style="padding:4px 10px; font-size:12px;">View</a>
+        <button class="action-btn delete-btn" style="padding:4px 10px; font-size:12px; background:#dc3545;">Delete</button>
+        </td>
+    </tr>
+    {% endfor %}
+
+    </tbody>
+
+    </table>
+
+    <div style="margin-top:20px;text-align:center;">
+
+    {% if receipts.has_previous %}
+    <a href="?page={{ receipts.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="action-btn">
+        Previous
+    </a>
+    {% endif %}
+
+    <span style="margin:0 10px;font-weight:bold;">
+    Page {{ receipts.number }} of {{ receipts.paginator.num_pages }}
+    </span>
+
+    {% if receipts.has_next %}
+    <a href="?page={{ receipts.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="action-btn">
+        Next
+    </a>
+    {% endif %}
+
+{% else %}
+
+<div class="empty-container">
+    <div class="empty-state">
+        <h5 class="empty-title">No Data Found</h5>
+        <p class="empty-text">You haven’t added any receipts yet.</p>
+    </div>
 </div>
 
-<table>
-
-<thead class="table-header">
-<tr id="column-header">
-    <th>#</th>
-    <th class="drag-col" draggable="true">Item</th>
-    <th class="drag-col" draggable="true">Total Amount</th>
-    <th class="drag-col" draggable="true">Tax Amount</th>
-    <th class="drag-col" draggable="true">Uploaded By</th>
-    <th class="drag-col" draggable="true">Created At</th>
-</tr>
-</thead>
-
-<tbody>
-
-{% for receipt in receipts %}
-<tr>
-    <td>{{ forloop.counter }}</td>
-    <td>{{ receipt.item }}</td>
-    <td>${{ receipt.total_amount }}</td>
-    <td>${{ receipt.tax_amount }}</td>
-    <td>{{ receipt.uploaded_by }}</td>
-    <td>{{ receipt.created_at }}</td>
-</tr>
-{% endfor %}
-
-</tbody>
-
-</table>
-
-<div style="margin-top:20px;text-align:center;">
-
-{% if receipts.has_previous %}
-<a href="?page={{ receipts.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="action-btn">
-    Previous
-</a>
-{% endif %}
-
-<span style="margin:0 10px;font-weight:bold;">
-Page {{ receipts.number }} of {{ receipts.paginator.num_pages }}
-</span>
-
-{% if receipts.has_next %}
-<a href="?page={{ receipts.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="action-btn">
-    Next
-</a>
 {% endif %}
 
 </div>
@@ -202,7 +231,7 @@ document.addEventListener("DOMContentLoaded", function(){
             const fromIndex = evt.oldIndex;
             const toIndex = evt.newIndex;
 
-            // Apply same change to ALL rows
+          
             Array.from(table.rows).forEach(row => {
 
                 const cells = row.children;
@@ -224,6 +253,101 @@ document.addEventListener("DOMContentLoaded", function(){
 
 });
 </script>
+
+
+<!-- EDIT / DELETE / MULTI DELETE -->
+<script>
+const CSRF = "{{ csrf_token }}";
+
+// ---- SELECT ALL ----
+document.getElementById("selectAll").addEventListener("change", function () {
+    document.querySelectorAll(".row-checkbox").forEach(cb => cb.checked = this.checked);
+    toggleDeleteButton();
+});
+
+document.querySelectorAll(".row-checkbox").forEach(cb => {
+    cb.addEventListener("change", toggleDeleteButton);
+});
+
+function toggleDeleteButton() {
+    const checked = document.querySelectorAll(".row-checkbox:checked").length > 0;
+    document.getElementById("deleteSelectedBtn").style.display = checked ? "inline-block" : "none";
+}
+
+// ---- DELETE SELECTED ----
+document.getElementById("deleteSelectedBtn").addEventListener("click", function () {
+    const selected = Array.from(document.querySelectorAll(".row-checkbox:checked"))
+        .map(cb => cb.dataset.id);
+
+    if (selected.length === 0) return;
+    if (!confirm(`Delete ${selected.length} category(s)? This cannot be undone.`)) return;
+
+    const promises = selected.map(id =>
+        fetch(`/receipts/${id}/delete/`,{
+            method: "POST",
+            headers: { "X-CSRFToken": CSRF }
+        }).then(r => r.json())
+    );
+
+    Promise.all(promises).then(results => {
+        results.forEach((data, i) => {
+            if (data.success) {
+                const row = document.querySelector(`tr[data-id="${selected[i]}"]`);
+                if (row) row.remove();
+            }
+        });
+        document.getElementById("selectAll").checked = false;
+        toggleDeleteButton();
+    });
+});
+
+
+
+function attachDeleteListeners() {
+    document.querySelectorAll(".delete-btn").forEach(btn => {
+        btn.onclick = function () {
+            const row = this.closest("tr");
+            if (row.classList.contains("editing")) return;
+
+            const categoryId = row.dataset.id;
+            const actionCell = row.querySelector(".action-cell");
+
+            actionCell.innerHTML = `
+                <span style="font-size:13px; color:#dc3545; margin-right:8px;">Sure?</span>
+                <button class="action-btn confirm-delete-btn" style="padding:4px 10px; font-size:12px; background:#dc3545;">Yes</button>
+                <button class="action-btn cancel-delete-btn" style="padding:4px 10px; font-size:12px; background:#6c757d;">No</button>
+            `;
+
+            actionCell.querySelector(".cancel-delete-btn").onclick = function () {
+                actionCell.innerHTML = `
+                    <button class="action-btn edit-btn" style="padding:4px 10px; font-size:12px;">Edit</button>
+                    <button class="action-btn delete-btn" style="padding:4px 10px; font-size:12px; background:#dc3545;">Delete</button>
+                `;
+                attachEditListeners();
+                attachDeleteListeners();
+            };
+
+            actionCell.querySelector(".confirm-delete-btn").onclick = function () {
+                fetch(`/receipts/${categoryId}/delete/`,  {
+                    method: "POST",
+                    headers: { "X-CSRFToken": CSRF }
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        row.remove();
+                    } else {
+                        alert("Delete failed: " + data.error);
+                    }
+                });
+            };
+        };
+    });
+}
+
+attachDeleteListeners();
+</script>
+
 
 </body>
 

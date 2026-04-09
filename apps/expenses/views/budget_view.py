@@ -10,6 +10,8 @@ import calendar
 import json
 from django.contrib.auth.decorators import login_required
 
+import traceback
+
 
 def apply_budget_filters(queryset, request):
     # FILTER BY USER 
@@ -102,14 +104,14 @@ def delete_budget(request, budget_id):
 @login_required
 def budgets_list(request):
 
-    # STEP 1: BASE QUERY
-    budgets = Budget.objects.all().order_by("-month")
+    # ✅ STEP 1: BASE QUERY (FIXED)
+    budgets = Budget.objects.filter(created_by=request.user).order_by("-month")
 
     # STEP 2: APPLY FILTER
     budgets, error = apply_budget_filters(budgets, request)
 
     # STEP 3: PAGINATION
-    paginator = Paginator(budgets, 5)   
+    paginator = Paginator(budgets, 5)
     page_number = request.GET.get("page")
     budgets = paginator.get_page(page_number)
 
@@ -120,7 +122,6 @@ def budgets_list(request):
     }
 
     return render(request, "budgets_list.html", context)
-
 
 @login_required
 def add_budget(request):
@@ -138,7 +139,7 @@ def add_budget(request):
                 # Convert "2026-04" → "2026-04-01" (first day of month)
                 y, m = map(int, month.split("-"))
                 month_date = date(y, m, 1)
-
+                
                 # Check duplicate
                 exists = Budget.objects.filter(
                     month=month_date,
@@ -158,5 +159,6 @@ def add_budget(request):
 
             except Exception as e:
                 error = f"Error saving budget: {str(e)}"
+                
 
     return render(request, "add_budget.html", {"error": error})

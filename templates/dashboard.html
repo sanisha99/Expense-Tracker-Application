@@ -20,6 +20,11 @@ href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 
 <div class="sidebar">
 
+     <!-- APP NAME -->
+    <div class="sidebar-appname">
+    💰 EXPENSE <span>TRACKER</span>
+    </div>
+
 <div class="sidebar-profile">
 
     <img src="{% static 'images/user.png' %}" class="profile-img">
@@ -68,7 +73,7 @@ href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 
 <div class="dashboard-header">
 
-<h1 class="dashboard-title">
+<h1 class="page-title">
 
     <img src="{% static 'images/logo.png' %}" class="dashboard-logo">
 
@@ -135,6 +140,7 @@ href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 </div>
 
 
+
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
 <script>
@@ -142,27 +148,18 @@ href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 flatpickr("#dateRange", {
     mode: "range",
     dateFormat: "Y-m-d",
-    
-    defaultDate: "{{ selected_dates }}".includes(" to ") 
-        ? "{{ selected_dates }}".split(" to ") 
-        : null,
+
+    defaultDate: "{{ selected_dates }}".split(" to "),
 
     onClose: function(selectedDates, dateStr) {
         if (selectedDates.length === 2) {
             window.location.href = "?dates=" + dateStr;
         }
-    },
-    
-    
-    onOpen: function() {
-        if ("{{ selected_dates }}") {
-            // User clicked input while filter is active → clear it
-            window.location.href = "/";
-        }
     }
 });
 
 </script>
+
 
 </body>
 </html>

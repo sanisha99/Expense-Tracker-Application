@@ -7,9 +7,50 @@
 
 <body>
 
+<!-- SIDEBAR -->
+<div class="sidebar">
+
+    {% load static %}
+
+    <div class="sidebar-appname">💰 EXPENSE <span>TRACKER</span></div>
+
+    <div class="sidebar-profile">
+        <img src="{% static 'images/user.png' %}" class="profile-img">
+        <div class="profile-name">
+            {% if request.user.is_authenticated %}
+                {{ request.user.username }}
+            {% else %}
+                Guest
+            {% endif %}
+        </div>
+
+        <div style="margin-top:10px; text-align:center;">
+            {% if request.user.is_authenticated %}
+                <form method="post" action="{% url 'logout' %}" style="margin-top:10px;">
+                    {% csrf_token %}
+                    <button type="submit" class="action-btn" style="width:100%;">Logout</button>
+                </form>
+            {% else %}
+                <a href="{% url 'login' %}" class="action-btn" style="display:block;">Login</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <a href="{% url 'dashboard' %}">Tracker Dashboard</a>
+    <a href="{% url 'expenses_list' %}" >Expenses</a>
+    <a href="{% url 'categories_list' %}" class="active">Categories</a>
+    <a href="{% url 'budgets_list' %}">Budgets</a>
+    <a href="{% url 'receipts_list' %}">Receipts</a>
+    <a href="{% url 'chatbot' %}">AI Assistant</a>
+
+</div>
+
+
+<!-- MAIN CONTENT -->
+
 <div class="main-content">
 
-    <h1 class="dashboard-title">Add Category</h1>
+    <h1 class="page-title">Add Category</h1>
 
     <div class="table-card" style="max-width:600px;">
 
@@ -20,23 +61,25 @@
             </div>
         {% endif %}
 
-        <form method="POST">
+        <form method="POST" novalidate>
             {% csrf_token %}
 
             <!-- CATEGORY NAME -->
             <div style="margin-bottom:15px;">
-                <label>Category Name</label><br>
-                <input type="text" name="name" required
-                       placeholder="e.g. Food, Shopping, Utility"
-                       style="width:100%; padding:10px; border-radius:6px; border:1px solid #ddd;">
+                <label>Category Name <span class="required">*</span></label><br>
+                <input type="text" id="name" name="name"
+                    placeholder="e.g. Food, Shopping, Utility"
+                    style="width:100%; padding:10px; border-radius:6px; border:1px solid #ddd;">
+                <small class="error-message" id="name-error"></small>
             </div>
 
             <!-- SUBCATEGORY -->
             <div style="margin-bottom:20px;">
-                <label>Subcategory</label><br>
-                <input type="text" name="subcategory" required
-                       placeholder="e.g. Lunch, Groceries, Rent"
-                       style="width:100%; padding:10px; border-radius:6px; border:1px solid #ddd;">
+                <label>Subcategory <span class="required">*</span></label><br>
+                <input type="text" id="subcategory" name="subcategory"
+                    placeholder="e.g. Lunch, Groceries, Rent"
+                    style="width:100%; padding:10px; border-radius:6px; border:1px solid #ddd;">
+                <small class="error-message" id="subcategory-error"></small>
             </div>
 
             <!-- BUTTONS -->
@@ -54,6 +97,35 @@
     </div>
 
 </div>
+
+<script>
+document.querySelector("form").addEventListener("submit", function(e) {
+    let isValid = true;
+
+    const name = document.getElementById("name");
+    const subcategory = document.getElementById("subcategory");
+
+    // reset
+    document.querySelectorAll(".error-message").forEach(el => el.innerText = "");
+    document.querySelectorAll("input").forEach(el => el.classList.remove("input-error"));
+
+    // Category Name
+    if (!name.value.trim()) {
+        isValid = false;
+        name.classList.add("input-error");
+        document.getElementById("name-error").innerText = "Category name is required";
+    }
+
+    // Subcategory
+    if (!subcategory.value.trim()) {
+        isValid = false;
+        subcategory.classList.add("input-error");
+        document.getElementById("subcategory-error").innerText = "Subcategory is required";
+    }
+
+    if (!isValid) e.preventDefault();
+});
+</script>
 
 </body>
 </html>

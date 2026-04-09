@@ -8,52 +8,96 @@
 
 <body>
 
+<!-- SIDEBAR -->
+<div class="sidebar">
+
+    {% load static %}
+
+    <div class="sidebar-appname">💰 EXPENSE <span>TRACKER</span></div>
+
+    <div class="sidebar-profile">
+        <img src="{% static 'images/user.png' %}" class="profile-img">
+        <div class="profile-name">
+            {% if request.user.is_authenticated %}
+                {{ request.user.username }}
+            {% else %}
+                Guest
+            {% endif %}
+        </div>
+
+        <div style="margin-top:10px; text-align:center;">
+            {% if request.user.is_authenticated %}
+                <form method="post" action="{% url 'logout' %}" style="margin-top:10px;">
+                    {% csrf_token %}
+                    <button type="submit" class="action-btn" style="width:100%;">Logout</button>
+                </form>
+            {% else %}
+                <a href="{% url 'login' %}" class="action-btn" style="display:block;">Login</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <a href="{% url 'dashboard' %}">Tracker Dashboard</a>
+    <a href="{% url 'expenses_list' %}" class="active">Expenses</a>
+    <a href="{% url 'categories_list' %}">Categories</a>
+    <a href="{% url 'budgets_list' %}">Budgets</a>
+    <a href="{% url 'receipts_list' %}">Receipts</a>
+    <a href="{% url 'chatbot' %}">AI Assistant</a>
+
+</div>
+
+<!-- MAIN CONTENT -->
 <div class="main-content">
 
-    <h1 class="dashboard-title">Add Expense</h1>
+    <h1 class="page-title">Add Expense</h1>
 
     <div class="table-card" style="max-width:600px;">
 
-        <form method="POST">
+        <form method="POST" novalidate>
             {% csrf_token %}
 
             <!-- ITEM -->
             <div style="margin-bottom:15px;">
-                <label>Item</label><br>
-                <input type="text" name="item" required
-                       style="width:100%; padding:10px; border-radius:6px; border:1px solid #ddd;">
+                <label>Item <span class="required">*</span></label><br>
+                <input type="text" id="item" name="item"
+                    style="width:100%; padding:10px; border-radius:6px; border:1px solid #ddd;">
+                <small class="error-message" id="item-error"></small>
             </div>
 
             <!-- AMOUNT -->
             <div style="margin-bottom:15px;">
-                <label>Amount</label><br>
-                <input type="number" step="0.01" name="amount" required
-                       style="width:100%; padding:10px; border-radius:6px; border:1px solid #ddd;">
+                <label>Amount ($) <span class="required">*</span></label><br>
+                <input type="number" step="0.01" id="amount" name="amount"
+                    style="width:100%; padding:10px; border-radius:6px; border:1px solid #ddd;">
+                <small class="error-message" id="amount-error"></small>
             </div>
 
             <!-- CATEGORY -->
             <div style="margin-bottom:15px;">
-                <label>Category</label><br>
-                <select name="category"
+                <label>Category <span class="required">*</span></label><br>
+                <select id="category" name="category"
                         style="width:100%; padding:10px; border-radius:6px; border:1px solid #ddd;">
+                    <option value="">-- Select Category --</option>
                     {% for cat in categories %}
                         <option value="{{ cat.id }}">{{ cat.name }}</option>
                     {% endfor %}
                 </select>
+                <small class="error-message" id="category-error"></small>
             </div>
 
             <!-- DATE -->
             <div style="margin-bottom:15px;">
-                <label>Date</label><br>
-                <input type="date" name="date" required
-                       style="width:100%; padding:10px; border-radius:6px; border:1px solid #ddd;">
+                <label>Date <span class="required">*</span></label><br>
+                <input type="date" id="date" name="date"
+                    style="width:100%; padding:10px; border-radius:6px; border:1px solid #ddd;">
+                <small class="error-message" id="date-error"></small>
             </div>
 
             <!-- TAX RATE -->
             <div style="margin-bottom:20px;">
                 <label>Tax Rate (%)</label><br>
                 <input type="number" step="0.01" name="tax_rate"
-                       style="width:100%; padding:10px; border-radius:6px; border:1px solid #ddd;">
+                    style="width:100%; padding:10px; border-radius:6px; border:1px solid #ddd;">
             </div>
 
             <!-- BUTTONS -->
@@ -62,7 +106,7 @@
                     Save Expense
                 </button>
 
-                <a href="/expenses/" class="action-btn" style="background:#6c757d;">
+                <a href="{% url 'expenses_list' %}" class="action-btn" style="background:#6c757d;">
                     Cancel
                 </a>
             </div>
@@ -72,6 +116,50 @@
     </div>
 
 </div>
+
+<script>
+const dateInput = document.getElementById("date");
+const today = new Date().toISOString().split("T")[0];
+dateInput.value = today;
+
+document.querySelector("form").addEventListener("submit", function(e) {
+    let isValid = true;
+
+    const item = document.getElementById("item");
+    const amount = document.getElementById("amount");
+    const category = document.getElementById("category");
+    const date = document.getElementById("date");
+
+    document.querySelectorAll(".error-message").forEach(el => el.innerText = "");
+    document.querySelectorAll("input, select").forEach(el => el.classList.remove("input-error"));
+
+    if (!item.value.trim()) {
+        isValid = false;
+        item.classList.add("input-error");
+        document.getElementById("item-error").innerText = "Item is required";
+    }
+
+    if (!amount.value) {
+        isValid = false;
+        amount.classList.add("input-error");
+        document.getElementById("amount-error").innerText = "Amount is required";
+    }
+
+    if (!category.value) {
+        isValid = false;
+        category.classList.add("input-error");
+        document.getElementById("category-error").innerText = "Please select a category";
+    }
+
+    if (!date.value) {
+        isValid = false;
+        date.classList.add("input-error");
+        document.getElementById("date-error").innerText = "Date is required";
+    }
+
+    if (!isValid) e.preventDefault();
+});
+</script>
 
 </body>
 </html>

@@ -13,6 +13,8 @@
 
     {% load static %}
 
+    <div class="sidebar-appname">💰 EXPENSE <span>TRACKER</span></div>
+
     <div class="sidebar-profile">
         <img src="{% static 'images/user.png' %}" class="profile-img">
         <div class="profile-name">
@@ -21,29 +23,22 @@
             {% else %}
                 Guest
             {% endif %}
-            </div>
+        </div>
 
-            <!-- LOGIN / LOGOUT BUTTON -->
-            <div style="margin-top:10px; text-align:center;">
-
+        <div style="margin-top:10px; text-align:center;">
             {% if request.user.is_authenticated %}
                 <form method="post" action="{% url 'logout' %}" style="margin-top:10px;">
                     {% csrf_token %}
-                    <button type="submit" class="action-btn" style="width:100%;">
-                        Logout
-                    </button>
+                    <button type="submit" class="action-btn" style="width:100%;">Logout</button>
                 </form>
             {% else %}
-                <a href="{% url 'login' %}" class="action-btn" style="display:block;">
-                    Login
-                </a>
+                <a href="{% url 'login' %}" class="action-btn" style="display:block;">Login</a>
             {% endif %}
-
-            </div>
+        </div>
     </div>
 
-    <a href="{% url 'dashboard' %}" >Tracker Dashboard</a>
-    <a href="{% url 'expenses_list' %}" class="active" >Expenses</a>
+    <a href="{% url 'dashboard' %}">Tracker Dashboard</a>
+    <a href="{% url 'expenses_list' %}" class="active">Expenses</a>
     <a href="{% url 'categories_list' %}">Categories</a>
     <a href="{% url 'budgets_list' %}">Budgets</a>
     <a href="{% url 'receipts_list' %}">Receipts</a>
@@ -54,11 +49,11 @@
 <!-- MAIN CONTENT -->
 <div class="main-content">
 
-<h1 class="dashboard-title">Expenses</h1>
+<h1 class="page-title">Expenses</h1>
 
 <div class="table-card">
 
-<!-- 🔥 TOP ACTION BAR -->
+<!-- TOP ACTION BAR -->
 <div class="table-actions">
 
     <!-- LEFT SIDE (FILTER) -->
@@ -72,41 +67,38 @@
                 </option>
             {% endfor %}
         </select>
-
-        <button type="submit" class="action-btn" style="padding:10px 18px;">
-            Filter
-        </button>
+        <button type="submit" class="action-btn" style="padding:10px 18px;">Filter</button>
     </form>
 
     <!-- RIGHT SIDE -->
     <div class="right-actions">
 
+        <!-- DELETE SELECTED -->
+        <button id="deleteSelectedBtn"
+                class="action-btn"
+                style="display:none; background:#dc3545; padding:9px 18px;">
+             Delete Selected
+        </button>
+
         <!-- IMPORT GROUP -->
         <form method="POST" enctype="multipart/form-data" class="file-import-group">
             {% csrf_token %}
             <label class="action-btn">
-            Upload File <input type="file" name="import_file" hidden>
+                Upload File <input type="file" name="import_file" hidden>
             </label>
-            <button type="submit" class="action-btn" style="padding:9px 18px;">
-                Import
-            </button>
+            <button type="submit" class="action-btn" style="padding:9px 18px;">Import</button>
         </form>
 
         <!-- EXPORT -->
-        <a href="{% url 'export_data' 'expenses' %}" 
-           class="action-btn" 
-           style="padding:10px 18px;">
+        <a href="{% url 'export_data' 'expenses' %}" class="action-btn" style="padding:10px 18px;">
             Export
         </a>
 
         <!-- ADD -->
-        <a href="{% url 'add_expense' %}" class="action-btn">
-            + Add Expense
-        </a>
-
-        </div>
+        <a href="{% url 'add_expense' %}" class="action-btn">+ Add Expense</a>
 
     </div>
+</div>
 
 <!-- MESSAGE -->
 {% if message %}
@@ -115,78 +107,98 @@
 </div>
 {% endif %}
 
-<!-- COLUMN TOGGLES -->
-<div class="column-toggle-row">
-    <label><input type="checkbox" class="column-toggle" data-column="1" checked> Date</label>
-    <label><input type="checkbox" class="column-toggle" data-column="2" checked> Item</label>
-    <label><input type="checkbox" class="column-toggle" data-column="3" checked> Category</label>
-    <label><input type="checkbox" class="column-toggle" data-column="4" checked> Tax Rate</label>
-    <label><input type="checkbox" class="column-toggle" data-column="5" checked> Tax Amount</label>
-    <label><input type="checkbox" class="column-toggle" data-column="6" checked> Total Amount</label>
+{% if expenses %}
+    <!-- COLUMN TOGGLES -->
+    <div class="column-toggle-row">
+        <label><input type="checkbox" class="column-toggle" data-column="1" checked> Date</label>
+        <label><input type="checkbox" class="column-toggle" data-column="2" checked> Item</label>
+        <label><input type="checkbox" class="column-toggle" data-column="3" checked> Category</label>
+        <label><input type="checkbox" class="column-toggle" data-column="4" checked> Tax Rate</label>
+        <label><input type="checkbox" class="column-toggle" data-column="5" checked> Tax Amount</label>
+        <label><input type="checkbox" class="column-toggle" data-column="6" checked> Total Amount</label>
+    </div>
+
+    <!-- TABLE -->
+    <table id="expense-table">
+
+    <thead class="table-header">
+    <tr id="column-header">
+        <th>
+            <input type="checkbox" id="selectAll"
+                style="width:16px; height:16px; cursor:pointer;">
+        </th>
+        <th>#</th>
+        <th class="drag-col" draggable="true">Date</th>
+        <th class="drag-col" draggable="true">Item</th>
+        <th class="drag-col" draggable="true">Category</th>
+        <th class="drag-col" draggable="true">Tax Rate (%)</th>
+        <th class="drag-col" draggable="true">Tax Amount</th>
+        <th class="drag-col" draggable="true">Total Amount</th>
+        <th>Actions</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    {% for expense in expenses %}
+    <tr data-id="{{ expense.id }}">
+        <td>
+            <input type="checkbox" class="row-checkbox"
+                data-id="{{ expense.id }}"
+                style="width:16px; height:16px; cursor:pointer;">
+        </td>
+        <td>{{ forloop.counter }}</td>
+        <td class="cell-date">{{ expense.date }}</td>
+        <td class="cell-item">{{ expense.item }}</td>
+        <td class="cell-category" data-category-id="{{ expense.category.id }}">
+            {{ expense.category.name }}
+        </td>
+        <td class="cell-taxrate">{{ expense.tax_rate }}</td>
+        <td class="cell-taxamount">${{ expense.tax_amount }}</td>
+        <td class="cell-total" data-amount="{{ expense.amount }}">
+            ${{ expense.amount|add:expense.tax_amount }}
+        </td>
+        <td class="action-cell">
+            <button class="action-btn edit-btn"
+                    style="padding:4px 10px; font-size:12px;">Edit</button>
+            <button class="action-btn delete-btn"
+                    style="padding:4px 10px; font-size:12px; background:#dc3545;">Delete</button>
+        </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+
+    </table>
+
+    <!-- PAGINATION -->
+    <div style="margin-top:20px; text-align:center; width:100%; display:flex;
+                justify-content:center; align-items:center; gap:10px;">
+
+        {% if expenses.has_previous %}
+        <a href="?page={{ expenses.previous_page_number }}
+        {% if request.GET.category %}&category={{ request.GET.category }}{% endif %}"
+        class="action-btn">Previous</a>
+        {% endif %}
+
+        <span style="font-weight:bold;">
+            Page {{ expenses.number }} of {{ expenses.paginator.num_pages }}
+        </span>
+
+        {% if expenses.has_next %}
+        <a href="?page={{ expenses.next_page_number }}
+        {% if request.GET.category %}&category={{ request.GET.category }}{% endif %}"
+        class="action-btn">Next</a>
+        {% endif %}
+
+
+{% else %}
+
+<div class="empty-container">
+    <div class="empty-state">
+        <h5 class="empty-title">No Data Found</h5>
+        <p class="empty-text">You haven’t added any receipts yet.</p>
+    </div>
 </div>
 
-<!-- TABLE -->
-<table id="expense-table">
-
-<thead class="table-header">
-<tr id="column-header">
-    <th>#</th>
-    <th class="drag-col" draggable="true">Date</th>
-    <th class="drag-col" draggable="true">Item</th>
-    <th class="drag-col" draggable="true">Category</th>
-    <th class="drag-col" draggable="true">Tax Rate (%)</th>
-    <th class="drag-col" draggable="true">Tax Amount</th>
-    <th class="drag-col" draggable="true">Total Amount</th>
-    <th>Actions</th>
-</tr>
-</thead>
-
-<tbody>
-
-{% for expense in expenses %}
-<tr data-id="{{ expense.id }}">
-    <td>{{ forloop.counter }}</td>
-    <td class="cell-date">{{ expense.date }}</td>
-    <td class="cell-item">{{ expense.item }}</td>
-    <td class="cell-category" data-category-id="{{ expense.category.id }}">
-        {{ expense.category.name }}
-    </td>
-    <td class="cell-taxrate">{{ expense.tax_rate }}</td>
-    <td class="cell-taxamount">${{ expense.tax_amount }}</td>
-    <td class="cell-total" data-amount="{{ expense.amount }}">${{ expense.amount|add:expense.tax_amount }}</td>
-    <td class="action-cell">
-        <button class="action-btn edit-btn"
-                style="padding:4px 10px; font-size:12px;">
-            Edit
-        </button>
-        <button class="action-btn delete-btn"
-                style="padding:4px 10px; font-size:12px; background:#dc3545;">
-            Delete
-        </button>
-    </td>
-</tr>
-{% endfor %}
-
-</tbody>
-</table>
-
-<!-- PAGINATION -->
-<div style="margin-top:20px;text-align:center;">
-
-{% if expenses.has_previous %}
-<a href="?page={{ expenses.previous_page_number }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}" class="action-btn">
-    Previous
-</a>
-{% endif %}
-
-<span style="margin:0 10px;font-weight:bold;">
-    Page {{ expenses.number }} of {{ expenses.paginator.num_pages }}
-</span>
-
-{% if expenses.has_next %}
-<a href="?page={{ expenses.next_page_number }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}" class="action-btn">
-    Next
-</a>
 {% endif %}
 
 </div>
@@ -197,24 +209,73 @@
 <!-- SORTABLE -->
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
-<!-- COLUMN TOGGLE -->
 <script>
-    const CURRENT_USER = "{{ request.user.username }}";
-</script>
+const CSRF = "{{ csrf_token }}";
+const CATEGORIES = {{ categories_obj|safe }};
 
-<script>
+// ================================
+// SELECT ALL
+// ================================
+document.getElementById("selectAll").addEventListener("change", function() {
+    document.querySelectorAll(".row-checkbox").forEach(cb => cb.checked = this.checked);
+    toggleDeleteButton();
+});
+
+document.querySelectorAll(".row-checkbox").forEach(cb => {
+    cb.addEventListener("change", toggleDeleteButton);
+});
+
+function toggleDeleteButton() {
+    const checked = document.querySelectorAll(".row-checkbox:checked").length > 0;
+    document.getElementById("deleteSelectedBtn").style.display = checked ? "inline-block" : "none";
+}
+
+// ================================
+// DELETE SELECTED
+// ================================
+document.getElementById("deleteSelectedBtn").addEventListener("click", function() {
+    const selected = Array.from(document.querySelectorAll(".row-checkbox:checked"))
+        .map(cb => cb.dataset.id);
+
+    if (selected.length === 0) return;
+    if (!confirm(`Delete ${selected.length} expense(s)? This cannot be undone.`)) return;
+
+    let deleted = 0;
+    selected.forEach(expenseId => {
+        fetch(`/expenses/${expenseId}/delete/`, {
+            method: "POST",
+            headers: { "X-CSRFToken": CSRF }
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                const row = document.querySelector(`tr[data-id="${expenseId}"]`);
+                if (row) row.remove();
+                deleted++;
+                if (deleted === selected.length) {
+                    toggleDeleteButton();
+                    document.getElementById("selectAll").checked = false;
+                }
+            }
+        });
+    });
+});
+
+// ================================
+// COLUMN TOGGLE
+// ================================
+const CURRENT_USER = "{{ request.user.username }}";
+
 document.addEventListener("DOMContentLoaded", function () {
 
     const STORAGE_KEY = `expenses-hiddenColumns-${CURRENT_USER}`;
     const toggles = document.querySelectorAll(".column-toggle");
 
-    // --- Restore saved state from previous session ---
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
 
     toggles.forEach(cb => {
-        const col = cb.dataset.column;
-
-        if (saved.includes(col)) {
+        const col = parseInt(cb.dataset.column) + 1;
+        if (saved.includes(cb.dataset.column)) {
             cb.checked = false;
             document.querySelectorAll("table tr").forEach(row => {
                 const cell = row.children[col];
@@ -222,18 +283,12 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         } else {
             cb.checked = true;
-            document.querySelectorAll("table tr").forEach(row => {
-                const cell = row.children[col];
-                if (cell) cell.style.display = "";
-            });
         }
     });
 
-    // --- Save on change ---
     toggles.forEach(cb => {
         cb.addEventListener("change", function () {
-
-            const col = this.dataset.column;
+            const col = parseInt(this.dataset.column) + 1;
             const visible = this.checked;
 
             document.querySelectorAll("table tr").forEach(row => {
@@ -250,12 +305,10 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
 });
-</script>
 
-<script>
-const CSRF = "{{ csrf_token }}";
-const CATEGORIES = {{ categories_obj|safe }};
-
+// ================================
+// INLINE EDIT / DELETE
+// ================================
 function buildCategoryOptions(selectedId) {
     return CATEGORIES.map(cat =>
         `<option value="${cat.id}" ${cat.id == selectedId ? "selected" : ""}>${cat.name}</option>`
@@ -278,17 +331,16 @@ function attachEditListeners() {
             const totalCell    = row.querySelector(".cell-total");
             const actionCell   = row.querySelector(".action-cell");
 
-            const origDate     = dateCell.textContent.trim();
-            const origItem     = itemCell.textContent.trim();
-            const origCatId    = categoryCell.dataset.categoryId;
-            const origCatName  = categoryCell.textContent.trim();
-            const origTaxRate  = taxRateCell.textContent.trim();
-            const origTaxAmt   = taxAmtCell.textContent.replace("$","").trim();
-            const origTotal    = totalCell.textContent.replace("$","").trim();
+            const origDate    = dateCell.textContent.trim();
+            const origItem    = itemCell.textContent.trim();
+            const origCatId   = categoryCell.dataset.categoryId;
+            const origCatName = categoryCell.textContent.trim();
+            const origTaxRate = taxRateCell.textContent.trim();
+            const origTaxAmt  = taxAmtCell.textContent.replace("$","").trim();
+            const origTotal   = totalCell.textContent.replace("$","").trim();
 
             const inputStyle = "padding:4px 6px; border-radius:4px; border:1px solid #ccc; font-size:13px;";
 
-            dateCell.innerHTML     = `<input type="date" value="${origDate}" style="${inputStyle} width:130px;">`;
             itemCell.innerHTML     = `<input type="text" value="${origItem}" style="${inputStyle} width:100px;">`;
             categoryCell.innerHTML = `<select style="${inputStyle} width:110px;">${buildCategoryOptions(origCatId)}</select>`;
             taxRateCell.innerHTML  = `<input type="number" step="0.01" value="${origTaxRate}" style="${inputStyle} width:70px;">`;
@@ -300,7 +352,6 @@ function attachEditListeners() {
                 <button class="action-btn cancel-btn" style="padding:4px 10px; font-size:12px; background:#6c757d;">Cancel</button>
             `;
 
-            // CANCEL
             actionCell.querySelector(".cancel-btn").onclick = function () {
                 dateCell.textContent     = origDate;
                 itemCell.textContent     = origItem;
@@ -318,14 +369,11 @@ function attachEditListeners() {
                 attachDeleteListeners();
             };
 
-            // SAVE
             actionCell.querySelector(".save-btn").onclick = function () {
-                const newDate    = dateCell.querySelector("input").value;
                 const newItem    = itemCell.querySelector("input").value.trim();
                 const newCatId   = categoryCell.querySelector("select").value;
                 const newTaxRate = taxRateCell.querySelector("input").value;
 
-                // Remove previous inline error
                 const prev = row.nextElementSibling;
                 if (prev && prev.classList.contains("inline-error")) prev.remove();
 
@@ -337,8 +385,8 @@ function attachEditListeners() {
                     },
                     body: JSON.stringify({
                         item: newItem,
-                        amount: totalCell.dataset.amount,   
-                        date: newDate,
+                        amount: totalCell.dataset.amount,
+                        date: origDate,
                         tax_rate: newTaxRate,
                         category_id: newCatId
                     })
@@ -363,7 +411,7 @@ function attachEditListeners() {
                     } else {
                         const tr = document.createElement("tr");
                         tr.className = "inline-error";
-                        tr.innerHTML = `<td colspan="8" style="color:#dc3545; font-size:13px; padding:4px 10px;">${data.error}</td>`;
+                        tr.innerHTML = `<td colspan="9" style="color:#dc3545; font-size:13px; padding:4px 10px;">${data.error}</td>`;
                         row.after(tr);
                     }
                 });
@@ -387,7 +435,6 @@ function attachDeleteListeners() {
                 <button class="action-btn cancel-delete-btn" style="padding:4px 10px; font-size:12px; background:#6c757d;">No</button>
             `;
 
-            // NO
             actionCell.querySelector(".cancel-delete-btn").onclick = function () {
                 actionCell.innerHTML = `
                     <button class="action-btn edit-btn" style="padding:4px 10px; font-size:12px;">Edit</button>
@@ -397,7 +444,6 @@ function attachDeleteListeners() {
                 attachDeleteListeners();
             };
 
-            // YES
             actionCell.querySelector(".confirm-delete-btn").onclick = function () {
                 fetch(`/expenses/${expenseId}/delete/`, {
                     method: "POST",

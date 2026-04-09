@@ -22,7 +22,14 @@ def dashboard(request):
     # -------------------------
     # DATE FILTER
     # -------------------------
+    today = timezone.now()
     date_range = request.GET.get("dates")
+
+    if not date_range:
+        # ✅ Default: current month start to year end
+        start_date = today.replace(day=1).strftime("%Y-%m-%d")
+        end_date = today.replace(month=12, day=31).strftime("%Y-%m-%d")
+        date_range = f"{start_date} to {end_date}"
 
     if date_range and " to " in date_range:
         try:

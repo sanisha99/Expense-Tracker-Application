@@ -3,23 +3,21 @@
 
 <head>
     <title>Categories</title>
-
     {% include "styles.html" %}
-
 </head>
 
 <body>
 
 <!-- SIDEBAR -->
-
 <div class="sidebar">
-
     {% load static %}
+     
+    <div class="sidebar-appname">
+        💰 EXPENSE <span>TRACKER</span>
+    </div>
 
     <div class="sidebar-profile">
-
         <img src="{% static 'images/user.png' %}" class="profile-img">
-
         <div class="profile-name">
             {% if request.user.is_authenticated %}
                 {{ request.user.username }}
@@ -28,48 +26,36 @@
             {% endif %}
         </div>
 
-        <!-- LOGIN / LOGOUT BUTTON -->
         <div style="margin-top:10px; text-align:center;">
-
             {% if request.user.is_authenticated %}
                 <form method="post" action="{% url 'logout' %}" style="margin-top:10px;">
                     {% csrf_token %}
-                    <button type="submit" class="action-btn" style="width:100%;">
-                        Logout
-                    </button>
+                    <button type="submit" class="action-btn" style="width:100%;">Logout</button>
                 </form>
             {% else %}
-                <a href="{% url 'login' %}" class="action-btn" style="display:block;">
-                    Login
-                </a>
+                <a href="{% url 'login' %}" class="action-btn" style="display:block;">Login</a>
             {% endif %}
-
         </div>
-
     </div>
-    <a href="{% url 'dashboard' %}" >Tracker Dashboard</a>
+
+    <a href="{% url 'dashboard' %}">Tracker Dashboard</a>
     <a href="{% url 'expenses_list' %}">Expenses</a>
     <a href="{% url 'categories_list' %}" class='active'>Categories</a>
     <a href="{% url 'budgets_list' %}">Budgets</a>
     <a href="{% url 'receipts_list' %}">Receipts</a>
     <a href="{% url 'chatbot' %}">AI Assistant</a>
-
 </div>
 
-
 <!-- MAIN CONTENT -->
-
 <div class="main-content">
 
-<h1 class="dashboard-title">Categories</h1>
+<h1 class="page-title">Categories</h1>
 
 <div class="table-card">
-
 
 <div class="table-actions">
 
     <form method="GET" style="display:flex; gap:10px;">
-
         <input 
             type="text" 
             name="search"
@@ -77,113 +63,107 @@
             value="{{ request.GET.search }}"
             style="padding:8px 12px; min-width:180px;"
         >
-
-        <button type="submit" class="action-btn">
-            Search
-        </button>
-
+        <button type="submit" class="action-btn">Search</button>
     </form>
  
     <div class="right-actions">
-        <!-- ADD button -->
-    <div style="margin-bottom:20px;">
+        <!-- DELETE SELECTED BUTTON -->
+        <button id="deleteSelectedBtn"
+                class="action-btn"
+                style="background:#dc3545; display:none;">
+             Delete Selected
+        </button>
         <a href="/categories/add/" class="action-btn">+ Add Category</a>
     </div>
+
+</div>
+
+{% if categories %}
+    <div style="margin-bottom:15px;">
+        <label><input type="checkbox" class="column-toggle" data-column="2" checked> Name</label>
+        <label><input type="checkbox" class="column-toggle" data-column="3" checked> Subcategory</label>
+        <label><input type="checkbox" class="column-toggle" data-column="4" checked> Created At</label>
     </div>
 
+    <table>
+    <thead class="table-header">
+    <tr id="column-header">
+        <th><input type="checkbox" id="selectAll"></th>
+        <th>#</th>
+        <th class="drag-col" draggable="true">Name</th>
+        <th class="drag-col" draggable="true">Subcategory</th>
+        <th class="drag-col" draggable="true">Created At</th>
+        <th>Actions</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    {% for category in categories %}
+    <tr data-id="{{ category.id }}">
+        <td><input type="checkbox" class="row-checkbox" data-id="{{ category.id }}"></td>
+        <td>{{ forloop.counter }}</td>
+        <td class="cell-name">{{ category.name }}</td>
+        <td class="cell-subcategory">{{ category.subcategory }}</td>
+        <td>{{ category.created_at }}</td>
+        <td class="action-cell">
+            <button class="action-btn edit-btn" style="padding:4px 10px; font-size:12px;">Edit</button>
+            <button class="action-btn delete-btn" style="padding:4px 10px; font-size:12px; background:#dc3545;">Delete</button>
+        </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+    </table>
+
+    <!-- PAGINATION -->
+    <div style="margin-top:20px; display:flex; justify-content:center; align-items:center; gap:10px;">
+        {% if categories.has_previous %}
+            <a href="?page={{ categories.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="action-btn">Previous</a>
+        {% endif %}
+
+        <span style="font-weight:bold;">
+            Page {{ categories.number }} of {{ categories.paginator.num_pages }}
+        </span>
+
+        {% if categories.has_next %}
+            <a href="?page={{ categories.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="action-btn">Next</a>
+        {% endif %}
+    </div>
+
+{% else %}
+
+<div class="empty-container">
+    <div class="empty-state">
+        <h5 class="empty-title">No Data Found</h5>
+        <p class="empty-text">You haven’t added any receipts yet.</p>
+    </div>
 </div>
 
-<div style="margin-bottom:15px;">
-<label><input type="checkbox" class="column-toggle" data-column="1" checked> Name</label>
-<label><input type="checkbox" class="column-toggle" data-column="2" checked> Subcategory</label>
-<label><input type="checkbox" class="column-toggle" data-column="3" checked> Created At</label>
-</div>
-
-
-<table>
-
-<thead class="table-header">
-
-<tr id="column-header">
-    <th>#</th>
-    <th class="drag-col" draggable="true">Name</th>
-    <th class="drag-col" draggable="true">Subcategory</th>
-    <th class="drag-col" draggable="true">Created At</th>
-    <th>Actions</th>
-</tr>
-
-</thead>
-
-<tbody>
-
-{% for category in categories %}
-<tr data-id="{{ category.id }}">
-    <td>{{ forloop.counter }}</td>
-    <td class="cell-name">{{ category.name }}</td>
-    <td class="cell-subcategory">{{ category.subcategory }}</td>
-    <td>{{ category.created_at }}</td>
-    <td class="action-cell">
-        <button class="action-btn edit-btn"
-                style="padding:4px 10px; font-size:12px;">
-            Edit
-        </button>
-        <button class="action-btn delete-btn"
-                style="padding:4px 10px; font-size:12px; background:#dc3545;">
-            Delete
-        </button>
-    </td>
-</tr>
-{% endfor %}
-
-</tbody>
-
-</table>
-
-<div style="margin-top:20px;text-align:center;">
-
-{% if categories.has_previous %}
-<a href="?page={{ categories.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="action-btn">
-    Previous
-</a>
-{% endif %}
-
-<span style="margin:0 10px;font-weight:bold;">
-Page {{ categories.number }} of {{ categories.paginator.num_pages }}
-</span>
-
-{% if categories.has_next %}
-<a href="?page={{ categories.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="action-btn">
-    Next
-</a>
 {% endif %}
 
 </div>
-
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
+<!-- COLUMN TOGGLE -->
 <script>
-document.addEventListener("DOMContentLoaded", function () {
+const CURRENT_USER = "{{ request.user.username }}";
 
-    const STORAGE_KEY = "categories-hiddenColumns";
+document.addEventListener("DOMContentLoaded", function () {
+    const STORAGE_KEY = `categories-hiddenColumns-${CURRENT_USER}`;
     const toggles = document.querySelectorAll(".column-toggle");
 
-    // --- Restore saved hidden columns from previous session ---
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
 
     toggles.forEach(cb => {
         const col = cb.dataset.column;
-
         if (saved.includes(col)) {
-            // Hide the column
             cb.checked = false;
             document.querySelectorAll("table tr").forEach(row => {
                 const cell = row.children[col];
                 if (cell) cell.style.display = "none";
             });
         } else {
-            // Ensure visible (default state)
             cb.checked = true;
             document.querySelectorAll("table tr").forEach(row => {
                 const cell = row.children[col];
@@ -192,33 +172,69 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 
-    // --- Toggle on checkbox change and save to localStorage ---
     toggles.forEach(cb => {
         cb.addEventListener("change", function () {
-
             const col = this.dataset.column;
             const visible = this.checked;
-
             document.querySelectorAll("table tr").forEach(row => {
                 const cell = row.children[col];
                 if (cell) cell.style.display = visible ? "" : "none";
             });
-
-            // Save current hidden columns
             const hidden = [];
-            toggles.forEach(c => {
-                if (!c.checked) hidden.push(c.dataset.column);
-            });
+            toggles.forEach(c => { if (!c.checked) hidden.push(c.dataset.column); });
             localStorage.setItem(STORAGE_KEY, JSON.stringify(hidden));
         });
     });
-
 });
 </script>
 
+<!-- EDIT / DELETE / MULTI DELETE -->
 <script>
 const CSRF = "{{ csrf_token }}";
 
+// ---- SELECT ALL ----
+document.getElementById("selectAll").addEventListener("change", function () {
+    document.querySelectorAll(".row-checkbox").forEach(cb => cb.checked = this.checked);
+    toggleDeleteButton();
+});
+
+document.querySelectorAll(".row-checkbox").forEach(cb => {
+    cb.addEventListener("change", toggleDeleteButton);
+});
+
+function toggleDeleteButton() {
+    const checked = document.querySelectorAll(".row-checkbox:checked").length > 0;
+    document.getElementById("deleteSelectedBtn").style.display = checked ? "inline-block" : "none";
+}
+
+// ---- DELETE SELECTED ----
+document.getElementById("deleteSelectedBtn").addEventListener("click", function () {
+    const selected = Array.from(document.querySelectorAll(".row-checkbox:checked"))
+        .map(cb => cb.dataset.id);
+
+    if (selected.length === 0) return;
+    if (!confirm(`Delete ${selected.length} category(s)? This cannot be undone.`)) return;
+
+    const promises = selected.map(id =>
+        fetch(`/categories/${id}/delete/`, {
+            method: "POST",
+            headers: { "X-CSRFToken": CSRF }
+        }).then(r => r.json())
+    );
+
+    Promise.all(promises).then(results => {
+        results.forEach((data, i) => {
+            if (data.success) {
+                const row = document.querySelector(`tr[data-id="${selected[i]}"]`);
+                if (row) row.remove();
+            }
+        });
+        document.getElementById("selectAll").checked = false;
+        toggleDeleteButton();
+    });
+});
+
+// ---- EDIT / DELETE SINGLE ----
 function attachEditListeners() {
     document.querySelectorAll(".edit-btn").forEach(btn => {
         btn.onclick = function () {
@@ -226,25 +242,22 @@ function attachEditListeners() {
             if (row.classList.contains("editing")) return;
             row.classList.add("editing");
 
-            const categoryId  = row.dataset.id;
-            const nameCell    = row.querySelector(".cell-name");
-            const subCell     = row.querySelector(".cell-subcategory");
-            const actionCell  = row.querySelector(".action-cell");
+            const categoryId = row.dataset.id;
+            const nameCell   = row.querySelector(".cell-name");
+            const subCell    = row.querySelector(".cell-subcategory");
+            const actionCell = row.querySelector(".action-cell");
 
             const origName = nameCell.textContent.trim();
             const origSub  = subCell.textContent.trim();
 
-            nameCell.innerHTML = `<input type="text" value="${origName}"
-                style="padding:4px 6px; border-radius:4px; border:1px solid #ccc; font-size:13px; width:120px;">`;
-            subCell.innerHTML  = `<input type="text" value="${origSub}"
-                style="padding:4px 6px; border-radius:4px; border:1px solid #ccc; font-size:13px; width:120px;">`;
+            nameCell.innerHTML = `<input type="text" value="${origName}" style="padding:4px 6px; border-radius:4px; border:1px solid #ccc; font-size:13px; width:120px;">`;
+            subCell.innerHTML  = `<input type="text" value="${origSub}" style="padding:4px 6px; border-radius:4px; border:1px solid #ccc; font-size:13px; width:120px;">`;
 
             actionCell.innerHTML = `
                 <button class="action-btn save-btn" style="padding:4px 10px; font-size:12px; background:#28a745;">Save</button>
                 <button class="action-btn cancel-btn" style="padding:4px 10px; font-size:12px; background:#6c757d;">Cancel</button>
             `;
 
-            // CANCEL
             actionCell.querySelector(".cancel-btn").onclick = function () {
                 nameCell.textContent = origName;
                 subCell.textContent  = origSub;
@@ -257,21 +270,16 @@ function attachEditListeners() {
                 attachDeleteListeners();
             };
 
-            // SAVE
             actionCell.querySelector(".save-btn").onclick = function () {
                 const newName = nameCell.querySelector("input").value.trim();
                 const newSub  = subCell.querySelector("input").value.trim();
 
-                // Remove any previous inline error
                 const prev = row.nextElementSibling;
                 if (prev && prev.classList.contains("inline-error")) prev.remove();
 
                 fetch(`/categories/${categoryId}/edit/`, {
                     method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "X-CSRFToken": CSRF
-                    },
+                    headers: { "Content-Type": "application/json", "X-CSRFToken": CSRF },
                     body: JSON.stringify({ name: newName, subcategory: newSub })
                 })
                 .then(r => r.json())
@@ -289,7 +297,7 @@ function attachEditListeners() {
                     } else {
                         const tr = document.createElement("tr");
                         tr.className = "inline-error";
-                        tr.innerHTML = `<td colspan="5" style="color:#dc3545; font-size:13px; padding:4px 10px;">${data.error}</td>`;
+                        tr.innerHTML = `<td colspan="6" style="color:#dc3545; font-size:13px; padding:4px 10px;">${data.error}</td>`;
                         row.after(tr);
                     }
                 });
@@ -313,7 +321,6 @@ function attachDeleteListeners() {
                 <button class="action-btn cancel-delete-btn" style="padding:4px 10px; font-size:12px; background:#6c757d;">No</button>
             `;
 
-            // NO
             actionCell.querySelector(".cancel-delete-btn").onclick = function () {
                 actionCell.innerHTML = `
                     <button class="action-btn edit-btn" style="padding:4px 10px; font-size:12px;">Edit</button>
@@ -323,7 +330,6 @@ function attachDeleteListeners() {
                 attachDeleteListeners();
             };
 
-            // YES
             actionCell.querySelector(".confirm-delete-btn").onclick = function () {
                 fetch(`/categories/${categoryId}/delete/`, {
                     method: "POST",
@@ -347,5 +353,4 @@ attachDeleteListeners();
 </script>
 
 </body>
-
 </html>

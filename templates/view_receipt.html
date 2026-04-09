@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Receipt Details</title>
+    {% include "styles.html" %}
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+    {% load static %}
+    <div class="sidebar-appname">
+        💰 EXPENSE <span>TRACKER</span>
+    </div>
+    <div class="sidebar-profile">
+        <img src="{% static 'images/user.png' %}" class="profile-img">
+        <div class="profile-name">
+            {% if request.user.is_authenticated %}
+                {{ request.user.username }}
+            {% else %}
+                Guest
+            {% endif %}
+        </div>
+        <div style="margin-top:10px; text-align:center;">
+            {% if request.user.is_authenticated %}
+                <form method="post" action="{% url 'logout' %}" style="margin-top:10px;">
+                    {% csrf_token %}
+                    <button type="submit" class="action-btn" style="width:100%;">Logout</button>
+                </form>
+            {% else %}
+                <a href="{% url 'login' %}" class="action-btn" style="display:block;">Login</a>
+            {% endif %}
+        </div>
+    </div>
+    <a href="{% url 'dashboard' %}">Tracker Dashboard</a>
+    <a href="{% url 'expenses_list' %}">Expenses</a>
+    <a href="{% url 'categories_list' %}">Categories</a>
+    <a href="{% url 'budgets_list' %}">Budgets</a>
+    <a href="{% url 'receipts_list' %}" class="active">Receipts</a>
+    <a href="{% url 'chatbot' %}">AI Assistant</a>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="main-content">
+
+    <h1 class="page-title">Receipt Details</h1>
+
+    <div class="table-card" style="max-width:700px;">
+
+        <!-- BACK BUTTON -->
+        <div style="margin-bottom:20px;">
+            <a href="{% url 'receipts_list' %}" class="action-btn">← Back to Receipts</a>
+        </div>
+
+        <!-- RECEIPT IMAGE -->
+        {% if receipt.image %}
+        <div style="margin-bottom:24px; text-align:center;">
+            <img src="{{ receipt.image.url }}" alt="Receipt Image"
+                 style="max-width:100%; max-height:500px; border-radius:8px; border:1px solid #ddd;">
+        </div>
+        {% endif %}
+
+        <!-- DETAILS TABLE -->
+        <table>
+        <!-- RAW SCANNED TEXT -->
+            {% if receipt.raw_text %}
+            <div style="margin-top:24px;">
+                <h3 style="margin-bottom:10px;">Raw Scanned Text</h3>
+                <pre style="
+                    background:#f8f9fa; 
+                    border:1px solid #ddd; 
+                    border-radius:8px; 
+                    padding:16px; 
+                    font-size:14px; 
+                    white-space:pre-wrap; 
+                    word-break:break-word;
+                    font-family: monospace;
+                ">{{ receipt.raw_text }}</pre>
+            </div>
+            {% else %}
+            <div style="margin-top:24px; color:#888;">
+                No raw scan text available for this receipt.
+            </div>
+            {% endif %}
+        </table>
+
+    </div>
+</div>
+
+</body>
+</html>

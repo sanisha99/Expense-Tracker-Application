@@ -3,7 +3,7 @@ from django.urls import path
 from .views.dashboard_view import dashboard
 from .views.expense_view import expenses_list,add_expense,edit_expense,delete_expense
 from .views.budget_view import budgets_list,add_budget,edit_budget,delete_budget
-from .views.receipt_view import receipts_list, generate_qr, mobile_upload
+from .views.receipt_view import receipts_list, generate_qr, mobile_upload,delete_receipt,view_receipt
 from .views.export_view import export_data
 from .chatbot import chatbot_view
 from .views.category_view import categories_list, add_category,edit_category,delete_category
@@ -25,7 +25,8 @@ urlpatterns = [
     path("budgets/<int:budget_id>/delete/", delete_budget, name="delete_budget"),
     path("budgets/add/", add_budget, name="add_budget"), 
     path("receipts/", receipts_list,name="receipts_list"),
-
+    path("receipts/<int:receipt_id>/delete/", delete_receipt, name="delete_receipt"),
+    path('receipts/<int:receipt_id>/view/',view_receipt, name='view_receipt'),
     path("qr-code/", generate_qr, name="qr_code"),
     path("mobile-upload/", mobile_upload, name="mobile_upload"),
 

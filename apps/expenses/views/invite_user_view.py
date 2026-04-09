@@ -9,6 +9,35 @@ from django.contrib.auth import login
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 
+from django.contrib.auth import authenticate, login
+from django.contrib.auth.models import User
+from django.shortcuts import render, redirect
+
+def custom_login(request):
+    error = None
+    if request.method == "POST":
+        identifier = request.POST.get("username")  # can be username or email
+        password = request.POST.get("password")
+
+        # Try by username first, then email
+        user = authenticate(request, username=identifier, password=password)
+
+        if user is None:
+            # Try finding user by email
+            try:
+                u = User.objects.get(email=identifier)
+                user = authenticate(request, username=u.username, password=password)
+            except User.DoesNotExist:
+                pass
+
+        if user is not None:
+            login(request, user)
+            return redirect('dashboard')
+        else:
+            error = "Invalid username/email or password"
+
+    return render(request, 'login.html', {'error': error})
+
 
 def send_invite_email(user, request):
     """Generate a secure invite token and send welcome email."""

@@ -61,15 +61,10 @@ class Budget(models.Model):
 
     def clean(self):
         # Prevent duplicate month (same year + month)
-        existing = Budget.objects.filter(
-            month__year=self.month.year,
-            month__month=self.month.month
-        )
-
-        if self.pk:
-            existing = existing.exclude(pk=self.pk)
-
-        if existing.exists():
+        if Budget.objects.filter(
+            month=self.month,
+            created_by=self.created_by
+        ).exclude(id=self.id).exists():
             raise ValidationError("Budget for this month already exists.")
 
     def save(self, *args, **kwargs):
@@ -88,6 +83,8 @@ class Receipt(models.Model):
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
 
     tax_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    
+    raw_text = models.TextField(blank=True, null=True)  
 
     uploaded_by = models.ForeignKey(
         User,

@@ -15,6 +15,11 @@
 <div class="sidebar">
 
     {% load static %}
+     
+    <!-- APP NAME -->
+    <div class="sidebar-appname">
+    💰 EXPENSE <span>TRACKER</span>
+    </div>
 
     <div class="sidebar-profile">
 
@@ -61,7 +66,7 @@
 
 <div class="main-content">
 
-<h1 class="dashboard-title">Budgets</h1>
+<h1 class="page-title">Budgets</h1>
 
 
 <div class="table-card">
@@ -99,93 +104,113 @@
         {{ error }}
     </div>
 {% endif %}
-     
+     <!-- DELETE SELECTED -->
+        <button id="deleteSelectedBtn"
+                class="action-btn"
+                style="display:none; background:#dc3545; padding:9px 18px;">
+             Delete Selected
+        </button>
+
      <div style="display:flex; gap:10px;">
         <a href="/budgets/add/" class="action-btn">+ Add Budget</a>
 
-    <!-- RIGHT: EXPORT -->
+    <!-- EXPORT -->
     <a href="{% url 'export_data' 'budgets' %}" class="action-btn">
         Export
     </a>
    
 </div>
 
+{% if budgets %}
 
-<!-- COLUMN TOGGLES -->
-<div style="margin-bottom:15px;">
+    <!-- COLUMN TOGGLES -->
+    <div style="margin-bottom:15px;">
 
-<label><input type="checkbox" class="column-toggle" data-column="1" checked> Month</label>
-<label><input type="checkbox" class="column-toggle" data-column="2" checked> Total Income</label>
-<label><input type="checkbox" class="column-toggle" data-column="3" checked> Budget Limit</label>
-<label><input type="checkbox" class="column-toggle" data-column="4" checked> Created By</label>
-<label><input type="checkbox" class="column-toggle" data-column="5" checked> Created At</label>
+    <label><input type="checkbox" class="column-toggle" data-column="1" checked> Month</label>
+    <label><input type="checkbox" class="column-toggle" data-column="2" checked> Total Income</label>
+    <label><input type="checkbox" class="column-toggle" data-column="3" checked> Budget Limit</label>
+    <label><input type="checkbox" class="column-toggle" data-column="4" checked> Created By</label>
+    <label><input type="checkbox" class="column-toggle" data-column="5" checked> Created At</label>
 
+    </div>
+
+
+    <table>
+
+    <thead class="table-header">
+    <tr id="column-header">
+        <th><input type="checkbox" id="selectAll"></th>
+        <th>#</th>
+        <th class="drag-col" draggable="true">Month</th>
+        <th class="drag-col" draggable="true">Total Income</th>
+        <th class="drag-col" draggable="true">Budget Limit</th>
+        <th class="drag-col" draggable="true">Created By</th>
+        <th class="drag-col" draggable="true">Created At</th>
+        <th>Actions</th>
+    </tr>
+    </thead>
+
+    <tbody>
+
+        {% for budget in budgets %}
+        <tr data-id="{{ budget.id }}">
+        <td><input type="checkbox" class="row-checkbox" data-id="{{ budget.id }}"></td>
+            <td>{{ forloop.counter }}</td>
+            <td class="cell-month">{{ budget.month }}</td>
+            <td class="cell-income">{{ budget.total_income }}</td>
+            <td class="cell-limit">{{ budget.budget_limit }}</td>
+            <td>{{ budget.created_by }}</td>
+            <td>{{ budget.created_at }}</td>
+            <td class="action-cell">
+                <button class="action-btn edit-btn"
+                        style="padding:4px 10px; font-size:12px;">
+                    Edit
+                </button>
+                <button class="action-btn delete-btn"
+                        style="padding:4px 10px; font-size:12px; background:#dc3545;">
+                    Delete
+                </button>
+            </td>
+        </tr>
+        {% endfor %}
+
+    </tbody>
+
+    </table>
+    <div style="margin-top:20px; text-align:center; width:100%; display:flex; justify-content:center; align-items:center; gap:10px;">
+
+        {% if budgets.has_previous %}
+            <a href="?page={{ budgets.previous_page_number }}
+            {% if request.GET.start_month %}&start_month={{ request.GET.start_month }}{% endif %}
+            {% if request.GET.end_month %}&end_month={{ request.GET.end_month }}{% endif %}"
+            class="action-btn">
+                Previous
+            </a>
+        {% endif %}
+
+        <span style="font-weight:bold;">
+            Page {{ budgets.number }} of {{ budgets.paginator.num_pages }}
+        </span>
+
+        {% if budgets.has_next %}
+            <a href="?page={{ budgets.next_page_number }}
+            {% if request.GET.start_month %}&start_month={{ request.GET.start_month }}{% endif %}
+            {% if request.GET.end_month %}&end_month={{ request.GET.end_month }}{% endif %}"
+            class="action-btn">
+                Next
+            </a>
+        {% endif %}
+
+{% else %}
+
+<div class="empty-container">
+    <div class="empty-state">
+        <h5 class="empty-title">No Data Found</h5>
+        <p class="empty-text">You haven’t added any receipts yet.</p>
+    </div>
 </div>
 
-
-<table>
-
-<thead class="table-header">
-<tr id="column-header">
-    <th>#</th>
-    <th class="drag-col" draggable="true">Month</th>
-    <th class="drag-col" draggable="true">Total Income</th>
-    <th class="drag-col" draggable="true">Budget Limit</th>
-    <th class="drag-col" draggable="true">Created By</th>
-    <th class="drag-col" draggable="true">Created At</th>
-    <th>Actions</th>
-</tr>
-</thead>
-
-<tbody>
-
-    {% for budget in budgets %}
-    <tr data-id="{{ budget.id }}">
-        <td>{{ forloop.counter }}</td>
-        <td class="cell-month">{{ budget.month }}</td>
-        <td class="cell-income">{{ budget.total_income }}</td>
-        <td class="cell-limit">{{ budget.budget_limit }}</td>
-        <td>{{ budget.created_by }}</td>
-        <td>{{ budget.created_at }}</td>
-        <td class="action-cell">
-            <button class="action-btn edit-btn"
-                    style="padding:4px 10px; font-size:12px;">
-                Edit
-            </button>
-            <button class="action-btn delete-btn"
-                    style="padding:4px 10px; font-size:12px; background:#dc3545;">
-                Delete
-            </button>
-        </td>
-    </tr>
-    {% endfor %}
-
-</tbody>
-
-</table>
-<div style="margin-top:20px; text-align:center; width:100%; display:flex; justify-content:center; align-items:center; gap:10px;">
-
-    {% if budgets.has_previous %}
-        <a href="?page={{ budgets.previous_page_number }}
-        {% if request.GET.start_month %}&start_month={{ request.GET.start_month }}{% endif %}
-        {% if request.GET.end_month %}&end_month={{ request.GET.end_month }}{% endif %}"
-        class="action-btn">
-            Previous
-        </a>
-    {% endif %}
-
-    <span style="font-weight:bold;">
-        Page {{ budgets.number }} of {{ budgets.paginator.num_pages }}
-    </span>
-
-    {% if budgets.has_next %}
-        <a href="?page={{ budgets.next_page_number }}
-        {% if request.GET.start_month %}&start_month={{ request.GET.start_month }}{% endif %}
-        {% if request.GET.end_month %}&end_month={{ request.GET.end_month }}{% endif %}"
-        class="action-btn">
-            Next
-        </a>
-    {% endif %}
+{% endif %}
 
 </div>
 
@@ -414,6 +439,49 @@ document.addEventListener("DOMContentLoaded", function () {
     if (!endInput.value) {
         endInput.value = `${currentYear}-12`;    // Dec of current year
     }
+});
+</script>
+<script>
+// ---- SELECT ALL ----
+document.getElementById("selectAll").addEventListener("change", function () {
+    document.querySelectorAll(".row-checkbox").forEach(cb => cb.checked = this.checked);
+    toggleDeleteButton();
+});
+
+document.querySelectorAll(".row-checkbox").forEach(cb => {
+    cb.addEventListener("change", toggleDeleteButton);
+});
+
+function toggleDeleteButton() {
+    const checked = document.querySelectorAll(".row-checkbox:checked").length > 0;
+    document.getElementById("deleteSelectedBtn").style.display = checked ? "inline-block" : "none";
+}
+
+// ---- DELETE SELECTED ----
+document.getElementById("deleteSelectedBtn").addEventListener("click", function () {
+    const selected = Array.from(document.querySelectorAll(".row-checkbox:checked"))
+        .map(cb => cb.dataset.id);
+
+    if (selected.length === 0) return;
+    if (!confirm(`Delete ${selected.length} budget(s)? This cannot be undone.`)) return;
+
+    const promises = selected.map(id =>
+        fetch(`/budgets/${id}/delete/`, {   // ← fixed to budgets
+            method: "POST",
+            headers: { "X-CSRFToken": CSRF }
+        }).then(r => r.json())
+    );
+
+    Promise.all(promises).then(results => {
+        results.forEach((data, i) => {
+            if (data.success) {
+                const row = document.querySelector(`tr[data-id="${selected[i]}"]`);
+                if (row) row.remove();
+            }
+        });
+        document.getElementById("selectAll").checked = false;
+        toggleDeleteButton();
+    });
 });
 </script>
 
