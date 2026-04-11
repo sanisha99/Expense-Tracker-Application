@@ -143,8 +143,7 @@ def expenses_list(request):
                         "message": message
                     })
 
-                resource = ExpenseResource()
-
+                resource = ExpenseResource(user=request.user)
                 result = resource.import_data(dataset, dry_run=False)
 
                 if result.has_errors():

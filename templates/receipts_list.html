@@ -111,18 +111,15 @@
             Delete Selected
         </button>
 
-        <!-- CLEAN FILE UPLOAD (NO "Choose file") -->
+
+           <!-- IMPORT GROUP -->
         <form method="POST" enctype="multipart/form-data" class="file-import-group">
             {% csrf_token %}
-
-            <label class="action-btn" style="margin:0;">
-                Import
-                <input type="file" name="receipt_image" hidden>
+            <label class="file-upload-label">
+                <span id="file-label-text">Choose File</span>
+                <input type="file" name="import_file" id="import_file" hidden>
             </label>
-
-            <button type="submit" class="action-btn">
-                Scan Receipt
-            </button>
+            <button type="submit" class="action-btn" style="padding:9px 18px;">Scan Receipt</button>
         </form>
 
         <!-- EXPORT -->
@@ -348,6 +345,12 @@ function attachDeleteListeners() {
 attachDeleteListeners();
 </script>
 
+<script>
+document.getElementById("import_file").addEventListener("change", function () {
+    const label = document.getElementById("file-label-text");
+    label.textContent = this.files.length > 0 ? this.files[0].name : "Choose File";
+});
+</script>
 
 </body>
 
